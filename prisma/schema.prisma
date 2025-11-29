@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Booking {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String?
+  phone              String
+  startDate          DateTime
+  endDate            DateTime
+  guests             Int?
+  bookingType        String
+  message            String?
+  totalAmount        Int
+  depositAmount      Int
+  depositPaid        Boolean  @default(false)
+  paymentProviderRef String?
+  status             String   @default("PENDING")
+  source             String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Pricing {
+  id      String   @id @default(cuid())
+  date    DateTime @unique
+  price   Int
+  blocked Boolean  @default(false)
+  note    String?
+}
+
+model Photo {
+  id     String @id @default(cuid())
+  url    String
+  caption String?
+  order  Int? @default(0)
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int
+  text      String
+  published Boolean  @default(false)
+  date      DateTime @default(now())
+}
+
+model Setting {
+  id               Int     @id @default(1)
+  depositPercent   Int     @default(20)
+  whatsappNumber   String?
+  adminPasswordHash String?
+  bookingStartDate DateTime?
+}
