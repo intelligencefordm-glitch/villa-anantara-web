@@ -11,7 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       start: b.startDate,
       end: b.endDate,
       summary: `Booked: ${b.name}`,
-      uid: b.id
+      uid: () => b.id
+
     });
   });
   res.setHeader('Content-Type', 'text/calendar');
