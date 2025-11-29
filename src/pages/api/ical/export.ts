@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import ical from 'ical-generator';
 import { PrismaClient } from '@prisma/client';
+
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -12,8 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       start: b.startDate,
       end: b.endDate,
       summary: `Booked: ${b.name}`,
-      // @ts-expect-error Library UID type definition is wrong; string UID is valid
-      uid: b.id
+      // @ts-expect-error ical-generator's UID type is incorrect; string UID works
+      uid: b.id as any
     });
   });
 
