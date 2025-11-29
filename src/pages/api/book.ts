@@ -30,6 +30,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   // Return wa.me link for manual WhatsApp notification (owner)
-  const wa = `https://wa.me/${process.env.WHATSAPP_NUMBER.replace('+','') }?text=New%20booking%20request%20for%20Villa%20Anantara%20from%20${encodeURIComponent(name)}%20(${startDate}%20to%20${endDate})`;
+  const wa = `https://wa.me/${process.env.WHATSAPP_NUMBER!.replace('+','') }?text=New%20booking%20request%20for%20Villa%20Anantara%20from%20${encodeURIComponent(name)}%20(${startDate}%20to%20${endDate})`;
   res.status(201).json({ booking: b, whatsapp: wa });
 }
