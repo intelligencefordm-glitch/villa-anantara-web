@@ -13,7 +13,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       start: b.startDate,
       end: b.endDate,
       summary: `Booked: ${b.name}`,
-      // @ts-expect-error ical-generator's UID type is incorrect; string UID works
       uid: b.id as any
     });
   });
