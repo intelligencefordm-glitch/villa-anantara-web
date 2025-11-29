@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const b = await prisma.booking.create({
     data: {
       name, phone, email, startDate: new Date(startDate), endDate: new Date(endDate),
-      message, totalAmount: totalAmount || 0, depositAmount: depositAmount || 0, depositPaid: !!depositPaid, status: 'PENDING', source: 'website'
+      message, totalAmount: totalAmount || 0, depositAmount: depositAmount || 0, depositPaid: !!depositPaid, status: 'PENDING', source: 'website',bookingType: 'default'
     }
   });
 
