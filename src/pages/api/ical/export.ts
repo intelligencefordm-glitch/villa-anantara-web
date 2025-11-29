@@ -6,15 +6,17 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const cal = ical({ name: 'Villa Anantara Bookings' });
   const bookings = await prisma.booking.findMany({ where: { status: 'CONFIRMED' }});
+
   bookings.forEach(b => {
     cal.createEvent({
       start: b.startDate,
       end: b.endDate,
       summary: `Booked: ${b.name}`,
-      uid: () => b.id
-
+      // @ts-expect-error Library UID type definition is wrong; string UID is valid
+      uid: b.id
     });
   });
+
   res.setHeader('Content-Type', 'text/calendar');
   res.send(cal.toString());
 }
