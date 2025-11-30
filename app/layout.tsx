@@ -1,7 +1,7 @@
 import "./globals.css";
-import Header from "@/components/Header";
-import FloatingInstagram from "@/components/FloatingInstagram";
-import FloatingWhatsApp from "@/components/FloatingWhatsApp";
+import Header from "../components/Header";
+import FloatingInstagram from "../components/FloatingInstagram";
+import FloatingWhatsApp from "../components/FloatingWhatsApp";
 
 export const metadata = {
   title: "Villa Anantara",
