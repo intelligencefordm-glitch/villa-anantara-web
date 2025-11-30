@@ -31,14 +31,12 @@ export default function Home() {
               Your private luxury farmhouse in Raipur —{" "}
               <span className="font-medium">a peaceful escape into nature.</span>
             </p>
-
-            {/* CTA Buttons Removed */}
           </div>
         </div>
       </section>
 
       {/* =========================== */}
-      {/* ABOUT / QUICK INFO */}
+      {/* ABOUT / INFO */}
       {/* =========================== */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="grid md:grid-cols-3 gap-10 items-start">
@@ -58,6 +56,31 @@ export default function Home() {
               Bookings open from{" "}
               <strong className="text-primary">15 January 2026</strong>.
             </p>
+
+            {/* =========================== */}
+            {/* MINI MAP UNDER ABOUT TEXT */}
+            {/* =========================== */}
+            <div className="mt-6 flex items-center gap-4">
+              <div className="rounded-lg overflow-hidden shadow border w-40">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.324276774168!2d81.65166437530348!3d21.255514479998443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28ddd262d23f09%3A0xa990e58aae55ee4f!2sVilla%20Anantara!5e0!3m2!1sen!2sin!4v1701101200000!5m2!1sen!2sin"
+                  width="100%"
+                  height="100"
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline font-medium hover:text-gray-700"
+              >
+                View on map
+              </a>
+            </div>
           </div>
 
           {/* QUICK INFO CARDS */}
@@ -85,39 +108,18 @@ export default function Home() {
 
         {/* Desktop Grid */}
         <div className="hidden md:grid grid-cols-3 gap-6">
-          <img
-            src="/images/gallery1.jpg"
-            alt=""
-            className="w-full h-64 object-cover rounded-xl shadow-md"
-          />
-          <img
-            src="/images/gallery2.jpg"
-            alt=""
-            className="w-full h-64 object-cover rounded-xl shadow-md"
-          />
+          <img src="/images/gallery1.jpg" className="w-full h-64 object-cover rounded-xl shadow-md" />
+          <img src="/images/gallery2.jpg" className="w-full h-64 object-cover rounded-xl shadow-md" />
           <div className="grid grid-rows-2 gap-6">
-            <img
-              src="/images/gallery3.jpg"
-              alt=""
-              className="w-full h-32 object-cover rounded-xl shadow-md"
-            />
-            <img
-              src="/images/gallery4.jpg"
-              alt=""
-              className="w-full h-32 object-cover rounded-xl shadow-md"
-            />
+            <img src="/images/gallery3.jpg" className="w-full h-32 object-cover rounded-xl shadow-md" />
+            <img src="/images/gallery4.jpg" className="w-full h-32 object-cover rounded-xl shadow-md" />
           </div>
         </div>
 
         {/* Mobile Masonry */}
         <div className="md:hidden columns-2 gap-4 space-y-4">
           {["gallery1", "gallery2", "gallery3", "gallery4"].map((img) => (
-            <img
-              key={img}
-              src={`/images/${img}.jpg`}
-              className="w-full rounded-xl shadow break-inside-avoid"
-              alt=""
-            />
+            <img key={img} src={`/images/${img}.jpg`} className="w-full rounded-xl shadow break-inside-avoid" />
           ))}
         </div>
       </section>
@@ -131,43 +133,11 @@ export default function Home() {
         <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-4 gap-6">
           {["Private pool", "Garden & BBQ", "Indoor games", "Music system"].map(
             (a) => (
-              <div
-                key={a}
-                className="p-5 border rounded-lg shadow-sm hover:shadow-md transition"
-              >
+              <div key={a} className="p-5 border rounded-lg shadow-sm hover:shadow-md transition">
                 <h4 className="font-medium text-primary">{a}</h4>
               </div>
             )
           )}
-        </div>
-      </section>
-
-      {/* =========================== */}
-      {/* FIND US WITH EMBEDDED MAP */}
-      {/* =========================== */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-semibold text-primary mb-6">Find Us</h2>
-
-        <div className="rounded-xl overflow-hidden shadow-lg border">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.324276774168!2d81.65166437530348!3d21.255514479998443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28ddd262d23f09%3A0xa990e58aae55ee4f!2sVilla%20Anantara!5e0!3m2!1sen!2sin!4v1701101200000!5m2!1sen!2sin"
-            width="100%"
-            height="250"
-            allowFullScreen
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
-        </div>
-
-        <div className="mt-4">
-          <a
-            href={mapUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-block bg-gray-800 text-white px-6 py-3 rounded-lg shadow hover:bg-gray-700 transition"
-          >
-            Open in Google Maps
-          </a>
         </div>
       </section>
 
@@ -184,12 +154,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-2">
-            {/* WhatsApp Removed */}
-            <a
-              href={mapUrl}
-              target="_blank"
-              className="block text-sm text-gray-300"
-            >
+            <a href={mapUrl} target="_blank" className="block text-sm text-gray-300">
               View on map
             </a>
           </div>
