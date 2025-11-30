@@ -32,27 +32,7 @@ export default function Home() {
               <span className="font-medium">a peaceful escape into nature.</span>
             </p>
 
-            {/* CTA BUTTONS */}
-            <div className="mt-6 flex gap-3 flex-wrap">
-              <a
-                href={`https://wa.me/${whatsapp.replace("+", "")}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-3 text-black font-semibold px-5 py-3 rounded-lg shadow transition"
-                style={{ backgroundColor: "#f2c94c" }}
-              >
-                Book via WhatsApp
-              </a>
-
-              <a
-                href={mapUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-3 border border-white/30 text-white px-5 py-3 rounded-lg hover:bg-white/10 transition"
-              >
-                View on map
-              </a>
-            </div>
+            {/* CTA BUTTONS REMOVED */}
           </div>
         </div>
       </section>
@@ -74,8 +54,7 @@ export default function Home() {
               designed to offer tranquility, comfort, and a luxurious
               experience. Enjoy a serene atmosphere surrounded by nature, with
               modern amenities and a lush garden perfect for relaxation.
-              <br />
-              <br />
+              <br /><br />
               Bookings open from{" "}
               <strong className="text-primary">15 January 2026</strong>.
             </p>
@@ -164,6 +143,24 @@ export default function Home() {
       </section>
 
       {/* =========================== */}
+      {/* FIND US (MAP BUTTON AT BOTTOM) */}
+      {/* =========================== */}
+      <section className="max-w-6xl mx-auto px-6 py-12">
+        <h2 className="text-xl font-semibold mb-3">Find Us</h2>
+        <p className="text-gray-600 mb-4">
+          Tap below to open the exact location of Villa Anantara.
+        </p>
+        <a
+          href={mapUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block bg-gray-800 text-white px-5 py-3 rounded-lg shadow hover:bg-gray-700 transition"
+        >
+          View on Google Maps
+        </a>
+      </section>
+
+      {/* =========================== */}
       {/* FOOTER */}
       {/* =========================== */}
       <footer className="bg-black text-white mt-20">
@@ -176,13 +173,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-2">
-            <a
-              href={`https://wa.me/${whatsapp.replace("+", "")}`}
-              target="_blank"
-              className="inline-block bg-white text-black px-4 py-2 rounded shadow"
-            >
-              Book on WhatsApp
-            </a>
+            {/* WhatsApp removed */}
             <a
               href={mapUrl}
               target="_blank"
