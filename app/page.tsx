@@ -145,25 +145,55 @@ export default function Home() {
       {/* FOOTER */}
       {/* =========================== */}
       <footer className="bg-black text-white mt-20">
-        <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row justify-between gap-6">
-          <div>
-            <h3 className="text-lg font-semibold">Villa Anantara</h3>
-            <p className="mt-2 text-sm text-gray-300">
-              Private luxury farmhouse near Raipur • Bookings open 15 Jan 2026
-            </p>
-          </div>
+  <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row justify-between gap-6">
 
-          <div className="space-y-2">
-            <a href={mapUrl} target="_blank" className="block text-sm text-gray-300">
-              View on map
-            </a>
-          </div>
+    {/* LEFT SIDE */}
+    <div>
+      <h3 className="text-lg font-semibold">Villa Anantara</h3>
+
+      <p className="mt-2 text-sm text-gray-300">
+        Private luxury farmhouse near Raipur • Bookings open 15 Jan 2026
+      </p>
+
+      {/* MINI MAP UNDER ABOUT TEXT */}
+      <div className="mt-4 flex items-center gap-4">
+        <div className="rounded-lg overflow-hidden shadow border w-40">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.324276774168!2d81.65166437530348!3d21.255514479998443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28ddd262d23f09%3A0xa990e58aae55ee4f!2sVilla%20Anantara!5e0!3m2!1sen!2sin!4v1701101200000!5m2!1sen!2sin"
+            width="100%"
+            height="100"
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
         </div>
 
-        <div className="text-center py-4 text-xs text-gray-400 border-t border-white/10">
-          © {new Date().getFullYear()} Villa Anantara
-        </div>
-      </footer>
-    </main>
-  );
-}
+        <a
+          href={mapUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline font-medium hover:text-gray-300"
+        >
+          View on map
+        </a>
+      </div>
+    </div>
+
+    {/* RIGHT SIDE */}
+    <div className="space-y-2">
+      <a
+        href={mapUrl}
+        target="_blank"
+        className="block text-sm text-gray-300"
+      >
+        View on map
+      </a>
+    </div>
+  </div>
+
+  <div className="text-center py-4 text-xs text-gray-400 border-t border-white/10">
+    © {new Date().getFullYear()} Villa Anantara
+  </div>
+</footer>
+
+        
