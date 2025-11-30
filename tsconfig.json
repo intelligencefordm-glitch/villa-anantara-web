@@ -1,33 +1,41 @@
 {
   "compilerOptions": {
+    /* ---------- TARGET + MODULE ---------- */
     "target": "ESNext",
-    "lib": ["dom", "dom.iterable", "esnext"],
     "module": "ESNext",
     "moduleResolution": "node",
-    "jsx": "preserve",
 
+    /* ---------- JSX (Next.js required) ---------- */
+    "jsx": "preserve",
     "allowJs": true,
-    "skipLibCheck": true,
+
+    /* ---------- TYPE CHECKING ---------- */
     "strict": false,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
     "noEmit": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
+
+    /* ---------- INCREMENTAL BUILD ---------- */
     "incremental": true,
 
-    /* -------------- PATH ALIAS FIX -------------- */
-    "baseUrl": ".",
+    /* ---------- ABSOLUTE ALIASES (FIX) ---------- */
+    "baseUrl": ".",                   
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"]                 
     },
 
-    /* -------------- NEXT.JS PLUGINS -------------- */
+    /* ---------- NEXT.JS PLUGIN ---------- */
     "plugins": [
-      { "name": "next" }
+      {
+        "name": "next"
+      }
     ]
   },
 
+  /* ---------- FILES INCLUDED ---------- */
   "include": [
     "next-env.d.ts",
     "**/*.ts",
@@ -35,5 +43,6 @@
     ".next/types/**/*.ts"
   ],
 
+  /* ---------- EXCLUDED ---------- */
   "exclude": ["node_modules"]
 }
