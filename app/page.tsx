@@ -32,7 +32,7 @@ export default function Home() {
               <span className="font-medium">a peaceful escape into nature.</span>
             </p>
 
-            {/* CTA BUTTONS REMOVED */}
+            {/* CTA Buttons Removed */}
           </div>
         </div>
       </section>
@@ -143,21 +143,32 @@ export default function Home() {
       </section>
 
       {/* =========================== */}
-      {/* FIND US (MAP BUTTON AT BOTTOM) */}
+      {/* FIND US WITH EMBEDDED MAP */}
       {/* =========================== */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <h2 className="text-xl font-semibold mb-3">Find Us</h2>
-        <p className="text-gray-600 mb-4">
-          Tap below to open the exact location of Villa Anantara.
-        </p>
-        <a
-          href={mapUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-block bg-gray-800 text-white px-5 py-3 rounded-lg shadow hover:bg-gray-700 transition"
-        >
-          View on Google Maps
-        </a>
+      <section className="max-w-6xl mx-auto px-6 py-20">
+        <h2 className="text-3xl font-semibold text-primary mb-6">Find Us</h2>
+
+        <div className="rounded-xl overflow-hidden shadow-lg border">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3688.324276774168!2d81.65166437530348!3d21.255514479998443!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a28ddd262d23f09%3A0xa990e58aae55ee4f!2sVilla%20Anantara!5e0!3m2!1sen!2sin!4v1701101200000!5m2!1sen!2sin"
+            width="100%"
+            height="250"
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          ></iframe>
+        </div>
+
+        <div className="mt-4">
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block bg-gray-800 text-white px-6 py-3 rounded-lg shadow hover:bg-gray-700 transition"
+          >
+            Open in Google Maps
+          </a>
+        </div>
       </section>
 
       {/* =========================== */}
@@ -173,7 +184,7 @@ export default function Home() {
           </div>
 
           <div className="space-y-2">
-            {/* WhatsApp removed */}
+            {/* WhatsApp Removed */}
             <a
               href={mapUrl}
               target="_blank"
