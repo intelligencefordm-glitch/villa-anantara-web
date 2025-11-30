@@ -1,14 +1,18 @@
-import './globals.css'
+import "./globals.css";
+import Header from "@/components/Header";
 
 export const metadata = {
-  title: 'Villa Anantara',
-  description: 'Villa Anantara - Raipur, Chhattisgarh',
-}
+  title: "Villa Anantara",
+  description: "Luxury villa stay at Villa Anantara",
+};
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-white text-gray-800">
+        <Header />
+        {children}
+      </body>
     </html>
-  )
+  );
 }
