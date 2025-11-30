@@ -1,41 +1,42 @@
 {
+  /* =============================
+     Typescript Configuration
+     For Next.js App Router
+     ============================= */
   "compilerOptions": {
-    /* ---------- TARGET + MODULE ---------- */
+    /* ---------- Core Language Options ---------- */
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
-
-    /* ---------- JSX (Next.js required) ---------- */
+    "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "preserve",
-    "allowJs": true,
 
-    /* ---------- TYPE CHECKING ---------- */
+    /* ---------- Type Checking Behavior ---------- */
     "strict": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
     "noEmit": true,
-    "esModuleInterop": true,
+    "allowJs": true,
     "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
 
-    /* ---------- INCREMENTAL BUILD ---------- */
+    /* ---------- Performance ---------- */
     "incremental": true,
 
-    /* ---------- ABSOLUTE ALIASES (FIX) ---------- */
-    "baseUrl": ".",                   
+    /* ---------- PATH ALIASES (IMPORTANT) ---------- */
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]                 
+      "@/*": ["./*"]
     },
 
-    /* ---------- NEXT.JS PLUGIN ---------- */
+    /* ---------- Next.js Plugin ---------- */
     "plugins": [
-      {
-        "name": "next"
-      }
+      { "name": "next" }
     ]
   },
 
-  /* ---------- FILES INCLUDED ---------- */
+  /* ---------- Files Included in Build ---------- */
   "include": [
     "next-env.d.ts",
     "**/*.ts",
@@ -43,6 +44,6 @@
     ".next/types/**/*.ts"
   ],
 
-  /* ---------- EXCLUDED ---------- */
+  /* ---------- Files/Folders Ignored ---------- */
   "exclude": ["node_modules"]
 }
