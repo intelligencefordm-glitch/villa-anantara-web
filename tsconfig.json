@@ -1,49 +1,31 @@
 {
-  /* =============================
-     Typescript Configuration
-     For Next.js App Router
-     ============================= */
   "compilerOptions": {
-    /* ---------- Core Language Options ---------- */
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["dom", "dom.iterable", "esnext"],
     "jsx": "preserve",
 
-    /* ---------- Type Checking Behavior ---------- */
+    "allowJs": true,
     "strict": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true,
-    "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "noEmit": true,
     "esModuleInterop": true,
-
-    /* ---------- Performance ---------- */
     "incremental": true,
 
-    /* ---------- PATH ALIASES (IMPORTANT) ---------- */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
+    "baseUrl": ".",                     
+    "paths": {                           
+      "@/*": ["./*"]                     
     },
 
-    /* ---------- Next.js Plugin ---------- */
     "plugins": [
       { "name": "next" }
     ]
   },
 
-  /* ---------- Files Included in Build ---------- */
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-
-  /* ---------- Files/Folders Ignored ---------- */
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
