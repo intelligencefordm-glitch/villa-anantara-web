@@ -1,15 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./src/app/**/*.{js,ts,jsx,tsx}",
-    "./src/components/**/*.{js,ts,jsx,tsx}",
-    "./src/pages/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        primary: "#0f1f0f",   // Deep luxury green (for buttons, titles)
-        accent: "#c8d6c0",    // Soft pastel green (for garden highlights)
+        primary: "#0f1f0f",   // deep elegant green
+        accent: "#c8d6c0",    // soft pastel green
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],
