@@ -6,7 +6,7 @@ import React from 'react';
 
 const futura = localFont({
   src: [
-    { path: './fonts/FuturaPT-Regular.otf', weight: '400', style: 'normal' },
+    { path: './fonts/FuturaPT-Regular.ttf', weight: '400', style: 'normal' },
     { path: './fonts/FuturaPT-Medium.otf', weight: '500', style: 'normal' },
   ],
   variable: '--font-futura',
