@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 export default function Home() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "+918889777288";
@@ -7,53 +7,43 @@ export default function Home() {
     process.env.NEXT_PUBLIC_MAP_URL ??
     "https://maps.app.goo.gl/dNiPHToeJaQQFf3e9";
 
-  // SLIDESHOW
-  const slides = [
-    "/images/hero1.jpg",
-    "/images/hero2.jpg",
-    "/images/hero3.jpg",
-  ];
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length);
-    }, 4000);
-    return () => clearInterval(t);
-  }, [slides.length]);
-
   return (
     <main className="min-h-screen bg-white text-gray-900">
 
       {/* =========================
-          HEADER: SLIDESHOW ONLY
+          HERO VIDEO (Works on Desktop + Mobile + iOS)
          ========================= */}
-      <header className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
-        {slides.map((src, i) => (
-          <div
-            key={src}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              i === index ? "opacity-100 z-10" : "opacity-0 z-0"
-            }`}
-            aria-hidden={i !== index}
-          >
-            <img
-              src={src}
-              alt={`Slide ${i + 1}`}
-              className="w-full h-full object-cover"
-            />
-            {/* optional overlay if you want slight darkening — commented out */}
-            {/* <div className="absolute inset-0 bg-black/20" /> */}
-          </div>
-        ))}
+      <header className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden bg-black">
+        <video
+          src="/videos/hero.mp4"
+          poster="/images/hero-poster.jpg"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          // iOS safety
+          webkit-playsinline="true"
+          // Prevent desktop browsers from pausing on load
+          onCanPlay={(e) => {
+            const v = e.currentTarget;
+            if (v.paused) v.play().catch(() => {});
+          }}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Fallback */}
+        <noscript>
+          <img
+            src="/images/hero-poster.jpg"
+            className="absolute inset-0 w-full h-full object-cover"
+            alt="Hero"
+          />
+        </noscript>
       </header>
 
       {/* =========================
-          (Removed: About at top / Bookings date)
-         ========================= */}
-
-      {/* =========================
-          QUICK INFO (kept minimal)
+          QUICK INFO SECTION
          ========================= */}
       <section className="max-w-6xl mx-auto px-6 py-14">
         <div className="grid md:grid-cols-3 gap-8 items-start">
@@ -79,15 +69,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          Gallery removed (per request)
-         ========================= */}
-
-      {/* =========================
-          Amenities removed (per request)
-         ========================= */}
-
-      {/* =========================
-          ABOUT moved to bottom (above footer)
+          ABOUT SECTION
          ========================= */}
       <section className="max-w-6xl mx-auto px-6 py-20 border-t">
         <h2 className="text-2xl font-semibold text-gray-900">About Villa Anantara</h2>
@@ -99,12 +81,12 @@ export default function Home() {
       </section>
 
       {/* =========================
-          FOOTER (single visible "View on map" only)
+          FOOTER
          ========================= */}
       <footer className="bg-black text-white mt-20">
         <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14">
-
-          {/* BRAND + MINI MAP */}
+          
+          {/* BRAND + MAP */}
           <div>
             <h3 className="text-xl font-semibold">Villa Anantara</h3>
             <p className="mt-2 text-sm text-gray-300">
@@ -123,7 +105,6 @@ export default function Home() {
                 ></iframe>
               </div>
 
-              {/* KEEP ONLY THIS VISIBLE LINK (white/primary) */}
               <a
                 href={mapUrl}
                 target="_blank"
@@ -140,14 +121,12 @@ export default function Home() {
             <h3 className="text-lg font-semibold mb-4">Find Help</h3>
             <ul className="space-y-2 text-gray-300">
               <li>
-                <a href="/contact" className="hover:text-white">
-                  Contact Us
-                </a>
+                <a href="/contact" className="hover:text-white">Contact Us</a>
               </li>
             </ul>
           </div>
 
-          {/* PRIVACY & TERMS */}
+          {/* PRIVACY */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Privacy & Terms</h3>
             <ul className="space-y-2 text-gray-300">
@@ -157,7 +136,7 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* QUICK LINKS (optional right column) */}
+          {/* QUICK LINKS */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-gray-300">
@@ -172,6 +151,7 @@ export default function Home() {
           © {new Date().getFullYear()} Villa Anantara
         </div>
       </footer>
+
     </main>
   );
 }
