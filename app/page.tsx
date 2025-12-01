@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useEffect, useState } from "react";
 
 export default function Home() {
   const whatsapp = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "+918889777288";
@@ -6,100 +7,110 @@ export default function Home() {
     process.env.NEXT_PUBLIC_MAP_URL ??
     "https://maps.app.goo.gl/dNiPHToeJaQQFf3e9";
 
+  // SLIDESHOW
+  const slides = [
+    "/images/hero1.jpg",
+    "/images/hero2.jpg",
+    "/images/hero3.jpg",
+  ];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
   return (
     <main className="min-h-screen bg-white text-gray-900">
 
-      {/* =========================== */}
-      {/* ABOUT SECTION (Hero Removed) */}
-      {/* =========================== */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-semibold text-primary">About Villa Anantara</h2>
+      {/* =========================
+          HEADER: SLIDESHOW ONLY
+         ========================= */}
+      <header className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
+        {slides.map((src, i) => (
+          <div
+            key={src}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              i === index ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
+            aria-hidden={i !== index}
+          >
+            <img
+              src={src}
+              alt={`Slide ${i + 1}`}
+              className="w-full h-full object-cover"
+            />
+            {/* optional overlay if you want slight darkening — commented out */}
+            {/* <div className="absolute inset-0 bg-black/20" /> */}
+          </div>
+        ))}
+      </header>
 
-        <p className="mt-4 text-gray-700 leading-relaxed">
-          Villa Anantara is a premium private farmhouse stay near Raipur,
-          designed to offer tranquility, comfort, and a luxurious experience.
-          <br /><br />
-          Bookings open from{" "}
-          <strong className="text-primary">15 January 2026</strong>.
-        </p>
+      {/* =========================
+          (Removed: About at top / Bookings date)
+         ========================= */}
 
-        {/* Mini-map removed from about (C) */}
-      </section>
-
-      {/* =========================== */}
-      {/* QUICK INFO */}
-      {/* =========================== */}
-      <section className="max-w-6xl mx-auto px-6 -mt-8 pb-10">
-        <div className="grid md:grid-cols-3 gap-10">
+      {/* =========================
+          QUICK INFO (kept minimal)
+         ========================= */}
+      <section className="max-w-6xl mx-auto px-6 py-14">
+        <div className="grid md:grid-cols-3 gap-8 items-start">
+          <div className="md:col-span-2">
+            <h2 className="text-3xl font-semibold text-gray-900">Villa Anantara</h2>
+            <p className="mt-4 text-gray-700">
+              A private luxury farmhouse near Raipur — peaceful, private and full-venue only.
+            </p>
+          </div>
 
           <div className="space-y-4">
             <div className="p-4 border rounded-lg shadow-sm">
-              <h3 className="font-medium text-primary">Capacity</h3>
+              <h3 className="font-medium">Capacity</h3>
               <p className="text-sm text-gray-600">Up to 12 guests • 3 bedrooms</p>
             </div>
 
             <div className="p-4 border rounded-lg shadow-sm">
-              <h3 className="font-medium text-primary">Deposit</h3>
+              <h3 className="font-medium">Deposit</h3>
               <p className="text-sm text-gray-600">20% advance • rest at check-in</p>
             </div>
           </div>
-
         </div>
       </section>
 
-      {/* =========================== */}
-      {/* GALLERY */}
-      {/* =========================== */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <h2 className="text-3xl font-semibold text-primary mb-10">Gallery</h2>
+      {/* =========================
+          Gallery removed (per request)
+         ========================= */}
 
-        {/* Desktop */}
-        <div className="hidden md:grid grid-cols-3 gap-6">
-          <img src="/images/gallery1.jpg" className="w-full h-64 object-cover rounded-xl shadow-md" />
-          <img src="/images/gallery2.jpg" className="w-full h-64 object-cover rounded-xl shadow-md" />
-          <div className="grid grid-rows-2 gap-6">
-            <img src="/images/gallery3.jpg" className="w-full h-32 object-cover rounded-xl shadow-md" />
-            <img src="/images/gallery4.jpg" className="w-full h-32 object-cover rounded-xl shadow-md" />
-          </div>
-        </div>
+      {/* =========================
+          Amenities removed (per request)
+         ========================= */}
 
-        {/* Mobile */}
-        <div className="md:hidden columns-2 gap-4 space-y-4">
-          {["gallery1", "gallery2", "gallery3", "gallery4"].map((img) => (
-            <img key={img} src={`/images/${img}.jpg`} className="w-full rounded-xl shadow break-inside-avoid" />
-          ))}
-        </div>
-      </section>
-
-      {/* =========================== */}
-      {/* AMENITIES */}
-      {/* =========================== */}
+      {/* =========================
+          ABOUT moved to bottom (above footer)
+         ========================= */}
       <section className="max-w-6xl mx-auto px-6 py-20 border-t">
-        <h2 className="text-3xl font-semibold text-primary">Amenities</h2>
-
-        <div className="mt-8 grid sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {["Private pool", "Garden & BBQ", "Indoor games", "Music system"].map((a) => (
-            <div key={a} className="p-5 border rounded-lg shadow-sm hover:shadow-md transition">
-              <h4 className="font-medium text-primary">{a}</h4>
-            </div>
-          ))}
-        </div>
+        <h2 className="text-2xl font-semibold text-gray-900">About Villa Anantara</h2>
+        <p className="mt-4 text-gray-700 leading-relaxed">
+          Villa Anantara is a premium private farmhouse stay near Raipur designed
+          to offer tranquility, comfort, and a luxurious experience. Rooms are
+          shown for information only — the property is rented as a full villa.
+        </p>
       </section>
 
-      {/* =========================== */}
-      {/* FOOTER (Keep mini-map ONLY here) */}
-      {/* =========================== */}
+      {/* =========================
+          FOOTER (single visible "View on map" only)
+         ========================= */}
       <footer className="bg-black text-white mt-20">
         <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14">
 
-          {/* COLUMN 1 — BRAND + MAP */}
+          {/* BRAND + MINI MAP */}
           <div>
             <h3 className="text-xl font-semibold">Villa Anantara</h3>
             <p className="mt-2 text-sm text-gray-300">
-              Private luxury farmhouse near Raipur • Bookings open 15 Jan 2026
+              Private luxury farmhouse near Raipur
             </p>
 
-            {/* Mini-map (E: Keep here) */}
             <div className="mt-4 flex items-center gap-4">
               <div className="rounded-lg overflow-hidden shadow border w-40">
                 <iframe
@@ -108,13 +119,15 @@ export default function Home() {
                   height="100"
                   allowFullScreen
                   loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 ></iframe>
               </div>
 
-              {/* REMOVE darkish one, keep only this clean one */}
+              {/* KEEP ONLY THIS VISIBLE LINK (white/primary) */}
               <a
                 href={mapUrl}
                 target="_blank"
+                rel="noreferrer"
                 className="text-primary underline font-medium hover:text-gray-300"
               >
                 View on map
@@ -122,15 +135,19 @@ export default function Home() {
             </div>
           </div>
 
-          {/* COLUMN 2 — FIND HELP */}
+          {/* FIND HELP */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Find Help</h3>
             <ul className="space-y-2 text-gray-300">
-              <li><a href="/contact" className="hover:text-white">Contact Us</a></li>
+              <li>
+                <a href="/contact" className="hover:text-white">
+                  Contact Us
+                </a>
+              </li>
             </ul>
           </div>
 
-          {/* COLUMN 3 — PRIVACY */}
+          {/* PRIVACY & TERMS */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Privacy & Terms</h3>
             <ul className="space-y-2 text-gray-300">
@@ -140,13 +157,21 @@ export default function Home() {
             </ul>
           </div>
 
+          {/* QUICK LINKS (optional right column) */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <ul className="space-y-2 text-gray-300">
+              <li><a href="/" className="hover:text-white">Home</a></li>
+              <li><a href="/rooms" className="hover:text-white">Rooms</a></li>
+              <li><a href="/contact" className="hover:text-white">Contact</a></li>
+            </ul>
+          </div>
         </div>
 
         <div className="text-center py-4 text-xs text-gray-400 border-t border-white/10">
           © {new Date().getFullYear()} Villa Anantara
         </div>
       </footer>
-
     </main>
   );
 }
