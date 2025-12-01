@@ -1,72 +1,83 @@
-{/* =========================
-    HERO VIDEO + CENTERED TITLE
-   ========================= */}
-<header className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden bg-black">
+"use client";
+import React from "react";
 
-  {/* HERO VIDEO */}
-  <video
-    src="/videos/hero.mp4"
-    autoPlay
-    loop
-    muted
-    playsInline
-    preload="auto"
-    className="absolute inset-0 w-full h-full object-cover"
-  />
+export default function Home() {
+  return (
+    <main className="min-h-screen bg-white text-gray-900">
 
-  {/* DARK OVERLAY */}
-  <div className="absolute inset-0 bg-black/30" />
+      {/* =========================
+          HERO VIDEO + CENTERED TITLE
+      ========================= */}
+      <header className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden bg-black">
 
-  {/* CENTERED TITLE */}
-  <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
-    <h1 className="text-white text-5xl md:text-7xl font-semibold leading-none">
+        {/* HERO VIDEO */}
+        <video
+          src="/videos/hero.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
-      {/* "V" - Futura */}
-      <span
-        className="font-futura font-[500]"
-        style={{
-          letterSpacing: "-0.03em",
-          marginRight: "-0.045em", // reduced space before "illa"
-        }}
-      >
-        V
-      </span>
+        {/* DARK OVERLAY */}
+        <div className="absolute inset-0 bg-black/30" />
 
-      {/* "illa" - Poppins */}
-      <span
-        className="font-poppins"
-        style={{
-          marginLeft: "-0.035em", // reduced gap after V
-        }}
-      >
-        illa
-      </span>
+        {/* CENTERED TITLE */}
+        <div className="absolute inset-0 flex items-center justify-center px-6 text-center">
+          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-none">
 
-      {/* small space between words */}
-      <span style={{ margin: "0 0.12em" }} />
+            {/* "V" - Futura */}
+            <span
+              className="font-futura font-[500]"
+              style={{
+                letterSpacing: "-0.03em",
+                marginRight: "-0.045em",
+              }}
+            >
+              V
+            </span>
 
-      {/* "A" - Futura */}
-      <span
-        className="font-futura font-[500]"
-        style={{
-          letterSpacing: "-0.03em",
-          marginRight: "-0.045em", // reduced space before "nantara"
-        }}
-      >
-        A
-      </span>
+            {/* "illa" - Poppins */}
+            <span
+              className="font-poppins"
+              style={{
+                marginLeft: "-0.035em",
+              }}
+            >
+              illa
+            </span>
 
-      {/* "nantara" - Poppins */}
-      <span
-        className="font-poppins"
-        style={{
-          marginLeft: "-0.035em", // reduced gap after A
-        }}
-      >
-        nantara
-      </span>
+            {/* small space */}
+            <span style={{ margin: "0 0.12em" }} />
 
-    </h1>
-  </div>
+            {/* "A" - Futura */}
+            <span
+              className="font-futura font-[500]"
+              style={{
+                letterSpacing: "-0.03em",
+                marginRight: "-0.045em",
+              }}
+            >
+              A
+            </span>
 
-</header>
+            {/* "nantara" - Poppins */}
+            <span
+              className="font-poppins"
+              style={{
+                marginLeft: "-0.035em",
+              }}
+            >
+              nantara
+            </span>
+
+          </h1>
+        </div>
+
+      </header>
+
+    </main>
+  );
+}
