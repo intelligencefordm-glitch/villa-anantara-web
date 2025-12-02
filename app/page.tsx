@@ -4,9 +4,9 @@ import React from "react";
 export default function Home() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
-
+      
       {/* =========================
-          STICKY HEADER (Logo + Center Title + Nav)
+          STICKY HEADER (Logo + Title + Nav)
       ========================= */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -26,10 +26,36 @@ export default function Home() {
             />
           </a>
 
-          {/* CENTER — Villa Anantara (HEADER TITLE) */}
-          <div className="absolute left-1/2 -translate-x-1/2">
+          {/* CENTER — Mixed Font Title */}
+          <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             <h1 className="text-[#0F1F0F] text-lg md:text-xl font-semibold tracking-wide">
-              Villa Anantara
+
+              {/* V (FUTURA) */}
+              <span
+                className="font-futura font-[500]"
+                style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
+              >
+                V
+              </span>
+
+              {/* illa (POPPINS) */}
+              <span
+                className="font-poppins"
+                style={{ marginRight: "0.12em" }}
+              >
+                illa
+              </span>
+
+              {/* A (FUTURA) */}
+              <span
+                className="font-futura font-[500]"
+                style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
+              >
+                A
+              </span>
+
+              {/* nantara (POPPINS) */}
+              <span className="font-poppins">nantara</span>
             </h1>
           </div>
 
@@ -43,7 +69,7 @@ export default function Home() {
 
         </div>
 
-        {/* MOBILE NAV SCROLLABLE */}
+        {/* MOBILE NAV */}
         <nav
           className="md:hidden overflow-x-auto flex gap-6 px-4 py-2 text-[#0F1F0F] text-sm"
         >
@@ -54,11 +80,13 @@ export default function Home() {
         </nav>
       </header>
 
+
       {/* Spacer below sticky header */}
       <div style={{ height: "110px" }} />
 
+
       {/* =========================
-          HERO VIDEO (CLEAN — NO BIG TITLE)
+          HERO VIDEO — CLEAN (NO TITLE)
       ========================= */}
       <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
         
@@ -71,74 +99,57 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Light overlay */}
+        {/* Overlay */}
         <div className="absolute inset-0 bg-black/35"></div>
 
-        {/* NO HERO TITLE — CLEAN */}
+        {/* CLEAN HERO — NO TITLE */}
       </section>
 
-      {/* =========================
-          ROOMS SECTION
-      ========================= */}
-      <section id="rooms" className="max-w-6xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-semibold mb-6 text-[#0F1F0F]">Rooms</h2>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            ["room1.jpg", "Master Suite", "King bed • Ensuite • Garden view"],
-            ["room2.jpg", "Deluxe Room", "Queen bed • Balcony"],
-            ["room3.jpg", "Family Suite", "2 beds • Living area"]
-          ].map(([img, title, desc], i) => (
-            <article key={i} className="border rounded-lg overflow-hidden shadow-sm bg-white/70">
-              <div className="h-44 bg-gray-100">
-                <img src={`/images/${img}`} alt={title} className="w-full h-full object-cover" />
-              </div>
-              <div className="p-4">
-                <h3 className="font-medium text-[#0F1F0F]">{title}</h3>
-                <p className="text-sm text-[#4a4a4a] mt-2">{desc}</p>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
       {/* =========================
-          AMENITIES
+          ROOMS — EMPTY (CENTERED)
       ========================= */}
-      <section id="amenities" className="max-w-6xl mx-auto px-6 py-16 border-t" style={{ borderColor: "rgba(15,31,15,0.08)" }}>
-        <h2 className="text-3xl font-semibold mb-8 text-[#0F1F0F]">Amenities</h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
-          {[
-            ["🌊", "Private Pool"],
-            ["🌿", "Spacious Lawn"],
-            ["🛏️", "3 Bedrooms"],
-            ["👥", "12 Guests"],
-            ["🚗", "Parking"],
-            ["🐾", "Pet Friendly"]
-          ].map(([icon, label], i) => (
-            <div key={i} className="flex flex-col items-center">
-              <div className="p-4 rounded-full bg-white shadow-sm mb-2">{icon}</div>
-              <span className="text-sm font-medium text-[#0F1F0F]">{label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* =========================
-          ABOUT SECTION
-      ========================= */}
-      <section className="max-w-6xl mx-auto px-6 py-20 border-t" style={{ borderColor: "rgba(15,31,15,0.08)" }}>
-        <h2 className="text-3xl font-semibold text-[#0F1F0F]">About Villa Anantara</h2>
-        <p className="mt-4 text-[#4a4a4a] leading-relaxed">
-          Villa Anantara is a premium private farmhouse stay near Raipur designed
-          to offer tranquility, comfort, and a luxurious experience. Rooms are
-          shown for information only — the property is rented as a full villa.
+      <section id="rooms" className="max-w-6xl mx-auto px-6 py-20 text-center">
+        <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">
+          Rooms
+        </h2>
+        <p className="text-[#4a4a4a] font-poppins">
+          Rooms will be updated soon.
         </p>
       </section>
 
+
       {/* =========================
-          FOOTER (beige like header)
+          AMENITIES — EMPTY (CENTERED)
+      ========================= */}
+      <section id="amenities" className="max-w-6xl mx-auto px-6 py-20 border-t text-center"
+        style={{ borderColor: "rgba(15,31,15,0.08)" }}
+      >
+        <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">
+          Amenities
+        </h2>
+        <p className="text-[#4a4a4a] font-poppins">
+          Amenities will be updated soon.
+        </p>
+      </section>
+
+
+      {/* =========================
+          ABOUT
+      ========================= */}
+      <section className="max-w-6xl mx-auto px-6 py-20 border-t"
+        style={{ borderColor: "rgba(15,31,15,0.08)" }}
+      >
+        <h2 className="text-3xl font-semibold text-[#0F1F0F]">About Villa Anantara</h2>
+        <p className="mt-4 text-[#4a4a4a] leading-relaxed">
+          Villa Anantara is a premium private farmhouse stay near Raipur designed
+          to offer tranquility, comfort, and a luxurious experience.
+        </p>
+      </section>
+
+
+      {/* =========================
+          FOOTER
       ========================= */}
       <footer className="mt-20" style={{ backgroundColor: "#EFE5D5" }}>
         <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14 text-[#0F1F0F]">
@@ -149,7 +160,7 @@ export default function Home() {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold mb-4">Find Help</h3>
+            <h3 className="text-lg font-semibold mb-4">Find Help</hh3>
             <ul className="space-y-2">
               <li><a href="/contact" className="hover:underline">Contact Us</a></li>
             </ul>
@@ -180,6 +191,7 @@ export default function Home() {
         </div>
       </footer>
 
+
       {/* =========================
           FLOATING SOCIAL BUTTONS
       ========================= */}
@@ -206,7 +218,9 @@ export default function Home() {
         >
           <img src="/icons/whatsapp.png" className="w-8 h-8 invert" alt="WhatsApp" />
         </a>
+
       </div>
+
     </main>
   );
 }
