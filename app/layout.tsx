@@ -1,3 +1,4 @@
+// app/layout.tsx
 import "./globals.css";
 import localFont from "next/font/local";
 import { Poppins } from "next/font/google";
@@ -20,8 +21,20 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Villa Anantara",
-  description: "Luxury private farmhouse villa near Raipur",
+  title: "Villa Anantara – Private Luxury Farmstay near Raipur",
+  description: "Villa Anantara — full-villa private farmhouse stay near Raipur. Book your private stay with pool, lawn and premium amenities.",
+  openGraph: {
+    title: "Villa Anantara – Private Luxury Farmstay",
+    description: "Book Villa Anantara — luxury private farmhouse near Raipur.",
+    url: "https://your-production-domain.vercel.app", // update to your real domain
+    images: ["/images/og-image.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Villa Anantara – Private Luxury Farmstay",
+    description: "Luxury private farmhouse near Raipur — book now.",
+    images: ["/images/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -33,4 +46,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
