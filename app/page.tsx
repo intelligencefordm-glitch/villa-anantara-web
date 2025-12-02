@@ -26,32 +26,13 @@ export default function Home() {
             />
           </a>
 
-          {/* CENTER — TITLE FUTURA + POPPINS */}
+          {/* CENTER — TITLE USING ABIGAIL FONT */}
           <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <h1 className="text-white font-bold text-lg md:text-xl tracking-wide">
-
-              <span
-                className="font-futura font-[600]"
-                style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
-              >
-                V
-              </span>
-
-              <span
-                className="font-poppins font-bold"
-                style={{ marginRight: "0.12em" }}
-              >
-                illa
-              </span>
-
-              <span
-                className="font-futura font-[600]"
-                style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
-              >
-                A
-              </span>
-
-              <span className="font-poppins font-bold">nantara</span>
+            <h1
+              className="text-white text-lg md:text-xl tracking-wide"
+              style={{ fontFamily: "var(--font-abigail)" }}
+            >
+              Villa Anantara
             </h1>
           </div>
 
@@ -62,7 +43,6 @@ export default function Home() {
             <a href="/#check-availability" className="hover:opacity-80">Check Availability</a>
             <a href="/contact" className="hover:opacity-80">Contact</a>
           </nav>
-
         </div>
 
         {/* MOBILE NAV */}
@@ -95,7 +75,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          ROOMS (EMPTY)
+          ROOMS
       ========================= */}
       <section id="rooms" className="max-w-6xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">Rooms</h2>
@@ -103,7 +83,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          AMENITIES (EMPTY)
+          AMENITIES
       ========================= */}
       <section
         id="amenities"
@@ -196,7 +176,6 @@ export default function Home() {
               <li><a href="/contact" className="hover:opacity-80">Contact</a></li>
             </ul>
           </div>
-
         </div>
 
         <div className="text-center py-4 text-xs text-white/80">
@@ -218,7 +197,7 @@ export default function Home() {
           <img src="/icons/instagram.png" className="w-8 h-8" />
         </a>
 
-        {/* WhatsApp with PRE-FILLED MESSAGE */}
+        {/* WhatsApp */}
         <a
           href="https://wa.me/918889777288?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20Villa%20Anantara."
           target="_blank"
