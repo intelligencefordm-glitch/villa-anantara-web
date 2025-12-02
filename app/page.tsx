@@ -6,7 +6,7 @@ export default function Home() {
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
 
       {/* =========================
-          HEADER (Brown BG)
+          HEADER
       ========================= */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -26,11 +26,10 @@ export default function Home() {
             />
           </a>
 
-          {/* CENTER — Villa Anantara (Futura + Poppins, bold) */}
+          {/* CENTER — TITLE FUTURA + POPPINS */}
           <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             <h1 className="text-white font-bold text-lg md:text-xl tracking-wide">
 
-              {/* V (FUTURA) */}
               <span
                 className="font-futura font-[600]"
                 style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
@@ -38,7 +37,6 @@ export default function Home() {
                 V
               </span>
 
-              {/* illa (POPPINS) */}
               <span
                 className="font-poppins font-bold"
                 style={{ marginRight: "0.12em" }}
@@ -46,7 +44,6 @@ export default function Home() {
                 illa
               </span>
 
-              {/* A (FUTURA) */}
               <span
                 className="font-futura font-[600]"
                 style={{ letterSpacing: "-0.02em", marginRight: "0.06em" }}
@@ -54,7 +51,6 @@ export default function Home() {
                 A
               </span>
 
-              {/* nantara (POPPINS) */}
               <span className="font-poppins font-bold">nantara</span>
             </h1>
           </div>
@@ -66,6 +62,7 @@ export default function Home() {
             <a href="/#check-availability" className="hover:opacity-80">Check Availability</a>
             <a href="/contact" className="hover:opacity-80">Contact</a>
           </nav>
+
         </div>
 
         {/* MOBILE NAV */}
@@ -79,11 +76,11 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Spacer below header */}
+      {/* Spacer */}
       <div style={{ height: "110px" }} />
 
       {/* =========================
-          HERO (NO TITLE)
+          HERO (CLEAN)
       ========================= */}
       <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
         <video
@@ -98,7 +95,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          ROOMS PLACEHOLDER
+          ROOMS (EMPTY)
       ========================= */}
       <section id="rooms" className="max-w-6xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">Rooms</h2>
@@ -106,19 +103,19 @@ export default function Home() {
       </section>
 
       {/* =========================
-          AMENITIES PLACEHOLDER
+          AMENITIES (EMPTY)
       ========================= */}
       <section
         id="amenities"
         className="max-w-6xl mx-auto px-6 py-20 border-t text-center"
         style={{ borderColor: "rgba(15,31,15,0.08)" }}
       >
-        <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">Amenities</h2>
+        <h2 className="text-3l font-semibold text-[#0F1F0F] mb-4">Amenities</h2>
         <p className="text-[#4a4a4a] font-poppins">Amenities will be updated soon.</p>
       </section>
 
       {/* =========================
-          ABOUT SECTION
+          ABOUT
       ========================= */}
       <section
         className="max-w-6xl mx-auto px-6 py-20 border-t"
@@ -132,7 +129,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          FOOTER (Brown BG + Mini Map)
+          FOOTER (BROWN + MINI MAP FIXED)
       ========================= */}
       <footer
         className="mt-20"
@@ -148,7 +145,7 @@ export default function Home() {
 
             {/* CLICKABLE MINI MAP */}
             <a
-              href="https://www.google.com/maps/search/?api=1&query=21.2555144,81.6516643"
+              href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-40 rounded-lg overflow-hidden shadow border border-white/20 mb-4"
@@ -164,7 +161,7 @@ export default function Home() {
 
             {/* VIEW ON MAP LINK */}
             <a
-              href="https://www.google.com/maps/search/?api=1&query=21.2555144,81.6516643"
+              href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-white font-bold hover:opacity-80"
@@ -200,6 +197,7 @@ export default function Home() {
               <li><a href="/contact" className="hover:opacity-80">Contact</a></li>
             </ul>
           </div>
+
         </div>
 
         <div className="text-center py-4 text-xs text-white/80">
@@ -208,11 +206,10 @@ export default function Home() {
       </footer>
 
       {/* =========================
-          FLOATING BUTTONS
+          FLOATING ICONS
       ========================= */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
 
-        {/* Instagram */}
         <a
           href="https://www.instagram.com/villaanantara/"
           target="_blank"
@@ -221,7 +218,6 @@ export default function Home() {
           <img src="/icons/instagram.png" className="w-8 h-8" />
         </a>
 
-        {/* WhatsApp */}
         <a
           href="https://wa.me/918889777288"
           target="_blank"
