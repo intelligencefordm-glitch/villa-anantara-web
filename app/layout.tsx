@@ -1,18 +1,19 @@
-// app/layout.tsx
 import "./globals.css";
 import localFont from "next/font/local";
 import { Poppins } from "next/font/google";
 import React from "react";
 
+// FUTURA (your existing one)
 const futura = localFont({
   src: [
     { path: "./fonts/FuturaPT-Regular.ttf", weight: "400", style: "normal" },
-    { path: "./fonts/FuturaPT-Medium.otf",  weight: "500", style: "normal" },
+    { path: "./fonts/FuturaPT-Medium.otf", weight: "500", style: "normal" },
   ],
   variable: "--font-futura",
   display: "swap",
 });
 
+// POPPINS
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -20,27 +21,21 @@ const poppins = Poppins({
   display: "swap",
 });
 
+// ABIGAIL (Header Font)
+const abigail = localFont({
+  src: "./fonts/ss-abigail.otf",
+  variable: "--font-abigail",
+  display: "swap",
+});
+
 export const metadata = {
-  title: "Villa Anantara – Private Luxury Farmstay near Raipur",
-  description: "Villa Anantara — full-villa private farmhouse stay near Raipur. Book your private stay with pool, lawn and premium amenities.",
-  openGraph: {
-    title: "Villa Anantara – Private Luxury Farmstay",
-    description: "Book Villa Anantara — luxury private farmhouse near Raipur.",
-    url: "https://your-production-domain.vercel.app", // update to your real domain
-    images: ["/images/og-image.jpg"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Villa Anantara – Private Luxury Farmstay",
-    description: "Luxury private farmhouse near Raipur — book now.",
-    images: ["/images/og-image.jpg"],
-  },
+  title: "Villa Anantara",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${futura.variable} ${poppins.variable} font-sans`}>
+      <body className={`${futura.variable} ${poppins.variable} ${abigail.variable}`}>
         {children}
       </body>
     </html>
