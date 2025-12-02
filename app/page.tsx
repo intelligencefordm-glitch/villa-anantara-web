@@ -4,9 +4,9 @@ import React from "react";
 export default function Home() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
-      
+
       {/* =========================
-          STICKY HEADER (Logo + Title + Nav)
+          STICKY HEADER
       ========================= */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -26,7 +26,7 @@ export default function Home() {
             />
           </a>
 
-          {/* CENTER — Mixed Font Title */}
+          {/* CENTER — HEADER TITLE (Futura + Poppins mix) */}
           <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             <h1 className="text-[#0F1F0F] text-lg md:text-xl font-semibold tracking-wide">
 
@@ -69,7 +69,7 @@ export default function Home() {
 
         </div>
 
-        {/* MOBILE NAV */}
+        {/* MOBILE NAV (SCROLLABLE) */}
         <nav
           className="md:hidden overflow-x-auto flex gap-6 px-4 py-2 text-[#0F1F0F] text-sm"
         >
@@ -80,16 +80,13 @@ export default function Home() {
         </nav>
       </header>
 
-
-      {/* Spacer below sticky header */}
+      {/* PUSH BELOW HEADER */}
       <div style={{ height: "110px" }} />
 
-
       {/* =========================
-          HERO VIDEO — CLEAN (NO TITLE)
+          HERO (CLEAN — NO TITLE)
       ========================= */}
       <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
-        
         <video
           src="/videos/hero.mp4"
           autoPlay
@@ -98,16 +95,11 @@ export default function Home() {
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
         />
-
-        {/* Overlay */}
         <div className="absolute inset-0 bg-black/35"></div>
-
-        {/* CLEAN HERO — NO TITLE */}
       </section>
 
-
       {/* =========================
-          ROOMS — EMPTY (CENTERED)
+          ROOMS — EMPTY
       ========================= */}
       <section id="rooms" className="max-w-6xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">
@@ -118,11 +110,12 @@ export default function Home() {
         </p>
       </section>
 
-
       {/* =========================
-          AMENITIES — EMPTY (CENTERED)
+          AMENITIES — EMPTY
       ========================= */}
-      <section id="amenities" className="max-w-6xl mx-auto px-6 py-20 border-t text-center"
+      <section
+        id="amenities"
+        className="max-w-6xl mx-auto px-6 py-20 border-t text-center"
         style={{ borderColor: "rgba(15,31,15,0.08)" }}
       >
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">
@@ -133,11 +126,11 @@ export default function Home() {
         </p>
       </section>
 
-
       {/* =========================
-          ABOUT
+          ABOUT SECTION
       ========================= */}
-      <section className="max-w-6xl mx-auto px-6 py-20 border-t"
+      <section
+        className="max-w-6xl mx-auto px-6 py-20 border-t"
         style={{ borderColor: "rgba(15,31,15,0.08)" }}
       >
         <h2 className="text-3xl font-semibold text-[#0F1F0F]">About Villa Anantara</h2>
@@ -147,25 +140,29 @@ export default function Home() {
         </p>
       </section>
 
-
       {/* =========================
           FOOTER
       ========================= */}
       <footer className="mt-20" style={{ backgroundColor: "#EFE5D5" }}>
         <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14 text-[#0F1F0F]">
 
+          {/* Col 1 */}
           <div>
             <h3 className="text-xl font-semibold">Villa Anantara</h3>
-            <p className="mt-2 text-sm text-[#4a4a4a]">Private luxury farmhouse near Raipur</p>
+            <p className="mt-2 text-sm text-[#4a4a4a]">
+              Private luxury farmhouse near Raipur
+            </p>
           </div>
 
+          {/* Col 2 */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Find Help</hh3>
+            <h3 className="text-lg font-semibold mb-4">Find Help</h3>
             <ul className="space-y-2">
               <li><a href="/contact" className="hover:underline">Contact Us</a></li>
             </ul>
           </div>
 
+          {/* Col 3 */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Privacy & Terms</h3>
             <ul className="space-y-2">
@@ -175,6 +172,7 @@ export default function Home() {
             </ul>
           </div>
 
+          {/* Col 4 */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
@@ -191,9 +189,8 @@ export default function Home() {
         </div>
       </footer>
 
-
       {/* =========================
-          FLOATING SOCIAL BUTTONS
+          FLOATING BUTTONS
       ========================= */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
 
