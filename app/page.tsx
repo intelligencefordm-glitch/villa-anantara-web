@@ -14,7 +14,7 @@ export default function Home() {
           {/* LEFT — LOGO */}
           <a href="/" className="flex items-center gap-2">
             <img
-              src="/images/logo.svg"
+              src="/images/logo.jpg"
               alt="Villa Anantara"
               className="h-10 w-auto"
             />
@@ -67,7 +67,7 @@ export default function Home() {
         <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center z-10">
 
           {/* LOGO ABOVE TITLE */}
-          <img src="/images/logo.svg" alt="VA Logo" className="h-16 w-auto mb-4" />
+          <img src="/images/logo.jpg" alt="VA Logo" className="h-16 w-auto mb-4" />
 
           {/* TITLE */}
           <h2 className="text-white text-5xl md:text-7xl font-semibold leading-none">
