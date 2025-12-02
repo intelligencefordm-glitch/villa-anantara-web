@@ -129,7 +129,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          FOOTER (BROWN + MINI MAP FIXED)
+          FOOTER (BROWN + MINI MAP)
       ========================= */}
       <footer
         className="mt-20"
@@ -142,12 +142,9 @@ export default function Home() {
 
           {/* COLUMN 1 — MINI MAP */}
           <div>
-
-            {/* CLICKABLE MINI MAP */}
             <a
               href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
               target="_blank"
-              rel="noopener noreferrer"
               className="block w-40 rounded-lg overflow-hidden shadow border border-white/20 mb-4"
             >
               <iframe
@@ -159,11 +156,9 @@ export default function Home() {
               ></iframe>
             </a>
 
-            {/* VIEW ON MAP LINK */}
             <a
               href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
               target="_blank"
-              rel="noopener noreferrer"
               className="underline text-white font-bold hover:opacity-80"
             >
               View on map
@@ -178,12 +173,16 @@ export default function Home() {
             </ul>
           </div>
 
-          {/* COLUMN 3 */}
+          {/* COLUMN 3 — UPDATED */}
           <div>
             <h3 className="text-lg font-bold mb-4">Privacy & Terms</h3>
             <ul className="space-y-2">
               <li><a href="/privacy" className="hover:opacity-80">Privacy Center</a></li>
-              <li><a href="/refund" className="hover:opacity-80">Refund Policy</a></li>
+              <li>
+                <a href="/refund" className="hover:opacity-80">
+                  Refund & Cancellation Policy
+                </a>
+              </li>
               <li><a href="/terms" className="hover:opacity-80">Terms & Conditions</a></li>
             </ul>
           </div>
@@ -210,6 +209,7 @@ export default function Home() {
       ========================= */}
       <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
 
+        {/* Instagram */}
         <a
           href="https://www.instagram.com/villaanantara/"
           target="_blank"
@@ -218,8 +218,9 @@ export default function Home() {
           <img src="/icons/instagram.png" className="w-8 h-8" />
         </a>
 
+        {/* WhatsApp with PRE-FILLED MESSAGE */}
         <a
-          href="https://wa.me/918889777288"
+          href="https://wa.me/918889777288?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20Villa%20Anantara."
           target="_blank"
           className="w-14 h-14 rounded-full bg-[#0F1F0F] shadow-lg flex items-center justify-center hover:scale-105 transition"
         >
