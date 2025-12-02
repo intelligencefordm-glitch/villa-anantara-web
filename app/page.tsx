@@ -4,9 +4,9 @@ import React from "react";
 export default function Home() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
-      
+
       {/* =========================
-          STICKY HEADER (Logo + Nav ONLY)
+          STICKY HEADER (Logo + Center Title + Nav)
       ========================= */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -21,10 +21,17 @@ export default function Home() {
           <a href="/" className="flex items-center gap-3">
             <img
               src="/images/logo.jpg"
-              alt="Villa Anantara"
+              alt="Villa Anantara Logo"
               className="h-10 w-auto"
             />
           </a>
+
+          {/* CENTER — Villa Anantara (HEADER TITLE) */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <h1 className="text-[#0F1F0F] text-lg md:text-xl font-semibold tracking-wide">
+              Villa Anantara
+            </h1>
+          </div>
 
           {/* RIGHT — DESKTOP NAV */}
           <nav className="hidden md:flex items-center gap-6 text-[#0F1F0F] text-sm font-medium">
@@ -33,6 +40,7 @@ export default function Home() {
             <a href="/#check-availability" className="hover:opacity-70">Check Availability</a>
             <a href="/contact" className="hover:opacity-70">Contact</a>
           </nav>
+
         </div>
 
         {/* MOBILE NAV SCROLLABLE */}
@@ -46,15 +54,14 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Push content below header */}
+      {/* Spacer below sticky header */}
       <div style={{ height: "110px" }} />
 
       {/* =========================
-          HERO VIDEO (clean title ONLY)
+          HERO VIDEO (CLEAN — NO BIG TITLE)
       ========================= */}
       <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
         
-        {/* Video */}
         <video
           src="/videos/hero.mp4"
           autoPlay
@@ -64,39 +71,10 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         />
 
-        {/* Slight dark overlay */}
+        {/* Light overlay */}
         <div className="absolute inset-0 bg-black/35"></div>
 
-        {/* CLEAN TITLE */}
-        <div className="absolute inset-0 flex items-center justify-center text-center">
-          <h2
-            className="text-[clamp(2.5rem,6vw,5rem)] font-semibold leading-none"
-            style={{
-              color: "#0F1F0F",
-              textShadow: "0px 0px 20px rgba(255,255,255,0.4)"
-            }}
-          >
-            <span
-              className="font-futura font-[500]"
-              style={{ marginRight: "0.08em" }}
-            >
-              V
-            </span>
-            <span
-              className="font-poppins"
-              style={{ marginRight: "0.18em" }}
-            >
-              illa
-            </span>
-            <span
-              className="font-futura font-[500]"
-              style={{ marginRight: "0.08em" }}
-            >
-              A
-            </span>
-            <span className="font-poppins">nantara</span>
-          </h2>
-        </div>
+        {/* NO HERO TITLE — CLEAN */}
       </section>
 
       {/* =========================
@@ -106,35 +84,21 @@ export default function Home() {
         <h2 className="text-3xl font-semibold mb-6 text-[#0F1F0F]">Rooms</h2>
 
         <div className="grid md:grid-cols-3 gap-6">
-          <article className="border rounded-lg overflow-hidden shadow-sm bg-white/70">
-            <div className="h-44 bg-gray-100">
-              <img src="/images/room1.jpg" alt="Master Suite" className="w-full h-full object-cover" />
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium text-[#0F1F0F]">Master Suite</h3>
-              <p className="text-sm text-[#4a4a4a] mt-2">King bed • Ensuite • Garden view</p>
-            </div>
-          </article>
-
-          <article className="border rounded-lg overflow-hidden shadow-sm bg-white/70">
-            <div className="h-44 bg-gray-100">
-              <img src="/images/room2.jpg" alt="Deluxe Room" className="w-full h-full object-cover" />
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium text-[#0F1F0F]">Deluxe Room</h3>
-              <p className="text-sm text-[#4a4a4a] mt-2">Queen bed • Balcony</p>
-            </div>
-          </article>
-
-          <article className="border rounded-lg overflow-hidden shadow-sm bg-white/70">
-            <div className="h-44 bg-gray-100">
-              <img src="/images/room3.jpg" alt="Family Suite" className="w-full h-full object-cover" />
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium text-[#0F1F0F]">Family Suite</h3>
-              <p className="text-sm text-[#4a4a4a] mt-2">2 beds • Living area</p>
-            </div>
-          </article>
+          {[
+            ["room1.jpg", "Master Suite", "King bed • Ensuite • Garden view"],
+            ["room2.jpg", "Deluxe Room", "Queen bed • Balcony"],
+            ["room3.jpg", "Family Suite", "2 beds • Living area"]
+          ].map(([img, title, desc], i) => (
+            <article key={i} className="border rounded-lg overflow-hidden shadow-sm bg-white/70">
+              <div className="h-44 bg-gray-100">
+                <img src={`/images/${img}`} alt={title} className="w-full h-full object-cover" />
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-[#0F1F0F]">{title}</h3>
+                <p className="text-sm text-[#4a4a4a] mt-2">{desc}</p>
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -145,7 +109,6 @@ export default function Home() {
         <h2 className="text-3xl font-semibold mb-8 text-[#0F1F0F]">Amenities</h2>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
-
           {[
             ["🌊", "Private Pool"],
             ["🌿", "Spacious Lawn"],
@@ -159,12 +122,11 @@ export default function Home() {
               <span className="text-sm font-medium text-[#0F1F0F]">{label}</span>
             </div>
           ))}
-
         </div>
       </section>
 
       {/* =========================
-          ABOUT
+          ABOUT SECTION
       ========================= */}
       <section className="max-w-6xl mx-auto px-6 py-20 border-t" style={{ borderColor: "rgba(15,31,15,0.08)" }}>
         <h2 className="text-3xl font-semibold text-[#0F1F0F]">About Villa Anantara</h2>
@@ -176,7 +138,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          FOOTER (matching header)
+          FOOTER (beige like header)
       ========================= */}
       <footer className="mt-20" style={{ backgroundColor: "#EFE5D5" }}>
         <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14 text-[#0F1F0F]">
@@ -245,7 +207,6 @@ export default function Home() {
           <img src="/icons/whatsapp.png" className="w-8 h-8 invert" alt="WhatsApp" />
         </a>
       </div>
-
     </main>
   );
 }
