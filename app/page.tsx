@@ -6,7 +6,7 @@ export default function Home() {
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
 
       {/* =========================
-          HEADER (Brown BG, Bold Text)
+          HEADER (Brown BG)
       ========================= */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -26,7 +26,7 @@ export default function Home() {
             />
           </a>
 
-          {/* CENTER TITLE — FUTURA + POPPINS */}
+          {/* CENTER — Villa Anantara (Futura + Poppins, bold) */}
           <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             <h1 className="text-white font-bold text-lg md:text-xl tracking-wide">
 
@@ -59,7 +59,7 @@ export default function Home() {
             </h1>
           </div>
 
-          {/* RIGHT — DESKTOP NAV */}
+          {/* RIGHT — NAV */}
           <nav className="hidden md:flex items-center gap-6 text-white text-sm font-bold">
             <a href="/" className="hover:opacity-80">Home</a>
             <a href="/rooms" className="hover:opacity-80">Rooms</a>
@@ -68,7 +68,7 @@ export default function Home() {
           </nav>
         </div>
 
-        {/* MOBILE NAV SCROLL */}
+        {/* MOBILE NAV */}
         <nav
           className="md:hidden overflow-x-auto flex gap-6 px-4 py-2 text-white text-sm font-bold"
         >
@@ -79,11 +79,11 @@ export default function Home() {
         </nav>
       </header>
 
-      {/* Push content down */}
+      {/* Spacer below header */}
       <div style={{ height: "110px" }} />
 
       {/* =========================
-          HERO — NO TITLE
+          HERO (NO TITLE)
       ========================= */}
       <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
         <video
@@ -98,7 +98,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          ROOMS — EMPTY PLACEHOLDER
+          ROOMS PLACEHOLDER
       ========================= */}
       <section id="rooms" className="max-w-6xl mx-auto px-6 py-20 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-4">Rooms</h2>
@@ -106,7 +106,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          AMENITIES — EMPTY PLACEHOLDER
+          AMENITIES PLACEHOLDER
       ========================= */}
       <section
         id="amenities"
@@ -118,7 +118,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          ABOUT
+          ABOUT SECTION
       ========================= */}
       <section
         className="max-w-6xl mx-auto px-6 py-20 border-t"
@@ -132,7 +132,7 @@ export default function Home() {
       </section>
 
       {/* =========================
-          FOOTER WITH MINI MAP
+          FOOTER (Brown BG + Mini Map)
       ========================= */}
       <footer
         className="mt-20"
@@ -148,7 +148,7 @@ export default function Home() {
 
             {/* CLICKABLE MINI MAP */}
             <a
-              href="https://maps.app.goo.gl/2JfVsG9Fa9rXn6cE8"
+              href="https://www.google.com/maps/search/?api=1&query=21.2555144,81.6516643"
               target="_blank"
               rel="noopener noreferrer"
               className="block w-40 rounded-lg overflow-hidden shadow border border-white/20 mb-4"
@@ -164,7 +164,7 @@ export default function Home() {
 
             {/* VIEW ON MAP LINK */}
             <a
-              href="https://maps.app.goo.gl/2JfVsG9Fa9rXn6cE8"
+              href="https://www.google.com/maps/search/?api=1&query=21.2555144,81.6516643"
               target="_blank"
               rel="noopener noreferrer"
               className="underline text-white font-bold hover:opacity-80"
@@ -200,7 +200,6 @@ export default function Home() {
               <li><a href="/contact" className="hover:opacity-80">Contact</a></li>
             </ul>
           </div>
-
         </div>
 
         <div className="text-center py-4 text-xs text-white/80">
