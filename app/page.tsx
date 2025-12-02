@@ -211,7 +211,7 @@ export default function Home() {
 
         {/* Instagram */}
         <a
-          href="https://www.instagram.com/villaanantara/"
+          href="https://www.instagram.com/villa.anantara/"
           target="_blank"
           className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
         >
