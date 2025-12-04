@@ -1,12 +1,17 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format, differenceInDays } from "date-fns";
 
 export default function CheckAvailabilityPage() {
-  const [range, setRange] = useState<{ from?: Date; to?: Date }>({});
+  // ⭐ FIXED: DateRange must always have from/to keys (can be undefined)
+  const [range, setRange] = useState<DateRange>({
+    from: undefined,
+    to: undefined,
+  });
+
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,7 +22,7 @@ export default function CheckAvailabilityPage() {
 
   const mocha = "#C29F80";
 
-  // AUTO SCROLL TO FORM AFTER DATE SELECTION
+  // AUTO SCROLL TO FORM AFTER DATES SELECTED
   useEffect(() => {
     if (range.from && formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth" });
@@ -28,16 +33,21 @@ export default function CheckAvailabilityPage() {
     range.from && range.to ? differenceInDays(range.to, range.from) : 0;
 
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Clean midnight
+  today.setHours(0, 0, 0, 0);
 
   // RESET FUNCTION
-  const resetDates = () => setRange({});
+  const resetDates = () =>
+    setRange({
+      from: undefined,
+      to: undefined,
+    });
 
   // SEND WHATSAPP MESSAGE
   const handleWhatsApp = () => {
-    if (!range.from || !range.to) return alert("Select your dates first!");
-    if (!name) return alert("Please enter your name");
-    if (!phone) return alert("Please enter your phone number");
+    if (!range.from || !range.to)
+      return alert("Please select your dates first.");
+    if (!name) return alert("Please enter your name.");
+    if (!phone) return alert("Please enter your phone number.");
 
     const msg = encodeURIComponent(
       `Hello, I would like to book Villa Anantara.\n\n` +
@@ -56,7 +66,6 @@ export default function CheckAvailabilityPage() {
 
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6 pb-20">
-      {/* TITLE */}
       <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">
         Check Availability
       </h1>
@@ -65,9 +74,9 @@ export default function CheckAvailabilityPage() {
       <div className="mb-10">
         <DayPicker
           mode="range"
+          numberOfMonths={1}
           selected={range}
           onSelect={setRange}
-          numberOfMonths={1}
           disabled={{ before: today }}
           modifiersClassNames={{
             selected: "selected-day",
@@ -90,16 +99,16 @@ export default function CheckAvailabilityPage() {
           }}
         />
 
-        {/* RESET DATES */}
+        {/* RESET */}
         <button
           onClick={resetDates}
-          className="mt-3 underline text-sm text-[#0F1F0F] hover:opacity-70"
+          className="mt-3 underline text-[#0F1F0F] text-sm hover:opacity-70"
         >
           Reset dates
         </button>
       </div>
 
-      {/* GUEST DETAILS FORM */}
+      {/* GUEST DETAILS */}
       <div
         ref={formRef}
         className="p-6 rounded-lg max-w-3xl"
@@ -109,11 +118,10 @@ export default function CheckAvailabilityPage() {
           Guest Details
         </h2>
 
-        {/* FULL NAME */}
-        <p className="text-white mb-1">Full name</p>
+        {/* NAME */}
+        <p className="text-white mb-1">Full Name</p>
         <input
-          className="w-full p-2 rounded mb-4"
-          style={{ background: "white" }}
+          className="w-full p-2 rounded mb-4 bg-white"
           placeholder="e.g. Rahul Sharma"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -122,9 +130,8 @@ export default function CheckAvailabilityPage() {
         {/* PHONE */}
         <p className="text-white mb-1">Phone (WhatsApp)</p>
         <input
-          className="w-full p-2 rounded mb-4"
-          style={{ background: "white" }}
-          placeholder="e.g. 9876543210"
+          className="w-full p-2 rounded mb-4 bg-white"
+          placeholder="9876543210"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
@@ -132,8 +139,7 @@ export default function CheckAvailabilityPage() {
         {/* EMAIL */}
         <p className="text-white mb-1">Email (optional)</p>
         <input
-          className="w-full p-2 rounded mb-4"
-          style={{ background: "white" }}
+          className="w-full p-2 rounded mb-4 bg-white"
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -142,8 +148,7 @@ export default function CheckAvailabilityPage() {
         {/* OCCASION */}
         <p className="text-white mb-1">Occasion</p>
         <select
-          className="w-full p-2 rounded mb-4"
-          style={{ background: "white" }}
+          className="w-full p-2 rounded mb-4 bg-white"
           value={occasion}
           onChange={(e) => setOccasion(e.target.value)}
         >
@@ -151,14 +156,13 @@ export default function CheckAvailabilityPage() {
           <option value="Other">Other</option>
         </select>
 
-        {/* GUEST COUNT */}
+        {/* GUESTS */}
         <p className="text-white mb-1">Guests</p>
         <input
           type="number"
           min={1}
           max={30}
-          className="w-full p-2 rounded mb-4"
-          style={{ background: "white" }}
+          className="w-full p-2 rounded mb-4 bg-white"
           value={guests}
           onChange={(e) => setGuests(Number(e.target.value))}
         />
@@ -180,7 +184,7 @@ export default function CheckAvailabilityPage() {
           </div>
         )}
 
-        {/* BUTTONS */}
+        {/* BUTTON */}
         <button
           onClick={handleWhatsApp}
           className="bg-[#0F1F0F] text-white px-5 py-2 rounded font-semibold hover:opacity-90"
@@ -189,7 +193,7 @@ export default function CheckAvailabilityPage() {
         </button>
       </div>
 
-      {/* GO BACK BUTTON (FLOATING) */}
+      {/* GO BACK BUTTON */}
       <a
         href="/"
         className="fixed bottom-6 left-6 flex items-center gap-2 bg-white text-[#0F1F0F] px-4 py-2 shadow rounded-full hover:scale-105 transition"
