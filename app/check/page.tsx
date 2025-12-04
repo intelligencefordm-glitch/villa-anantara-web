@@ -157,10 +157,15 @@ export default function CheckAvailability() {
   };
 
   return (
-    <main className="min-h-screen px-6 py-10" style={{ backgroundColor: "#EFE5D5" }}>
+    <main
+      className="min-h-screen px-6 py-10"
+      style={{ backgroundColor: "#EFE5D5" }}
+    >
       <h1 className="text-3xl font-bold text-[#0F1F0F] mb-4">Check Availability</h1>
 
-      {warning && <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">{warning}</div>}
+      {warning && (
+        <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">{warning}</div>
+      )}
 
       {loading ? (
         <p>Loading calendar...</p>
@@ -178,14 +183,20 @@ export default function CheckAvailability() {
         />
       )}
 
-      <div className="mt-8 max-w-2xl bg-white rounded shadow p-6">
-        <h2 className="text-xl font-semibold mb-3">Guest details</h2>
+      {/* =========================
+          GUEST DETAILS BOX
+      ========================= */}
+      <div
+        className="mt-8 max-w-2xl rounded shadow p-6"
+        style={{ backgroundColor: "#C29F80", color: "white" }}
+      >
+        <h2 className="text-xl font-semibold mb-3">Guest Details</h2>
 
         <label className="block mb-2 text-sm">Full name</label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
+          className="w-full p-2 border rounded mb-3 bg-white text-black"
           placeholder="e.g. Rahul Sharma"
         />
 
@@ -193,7 +204,7 @@ export default function CheckAvailability() {
         <input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full p-2 border rounded mb-3"
+          className="w-full p-2 border rounded mb-3 bg-white text-black"
           placeholder="+91 9xxxxxxxxx"
         />
 
@@ -203,7 +214,7 @@ export default function CheckAvailability() {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded mb-3"
+              className="w-full p-2 border rounded mb-3 bg-white text-black"
               placeholder="you@example.com"
             />
           </div>
@@ -216,19 +227,25 @@ export default function CheckAvailability() {
               max={20}
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full p-2 border rounded mb-3"
+              className="w-full p-2 border rounded mb-3 bg-white text-black"
             />
           </div>
         </div>
 
         <div className="mt-4">
           <p>
-            <strong>Check-in:</strong> {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}
+            <strong>Check-in:</strong>{" "}
+            {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}
           </p>
           <p>
-            <strong>Check-out:</strong> {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}
+            <strong>Check-out:</strong>{" "}
+            {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}
           </p>
-          {checkIn && checkOut && <p><strong>Nights:</strong> {nights}</p>}
+          {checkIn && checkOut && (
+            <p>
+              <strong>Nights:</strong> {nights}
+            </p>
+          )}
         </div>
 
         <div className="mt-6 flex gap-3">
@@ -241,13 +258,22 @@ export default function CheckAvailability() {
             {sending ? "Sending..." : "Confirm & Send on WhatsApp"}
           </button>
 
-          <button
-            onClick={resetDates}
-            className="px-4 py-2 rounded border"
-          >
+          <button onClick={resetDates} className="px-4 py-2 rounded border">
             Reset dates
           </button>
         </div>
+      </div>
+
+      {/* =========================
+          FLOATING GO BACK BUTTON
+      ========================= */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <button
+          onClick={() => window.history.back()}
+          className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
+        >
+          <img src="/icons/back.png" className="w-6 h-6" alt="Go Back" />
+        </button>
       </div>
     </main>
   );
