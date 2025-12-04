@@ -6,3 +6,10 @@
 body {
   @apply font-sans text-gray-800;
 }
+/* style for react-day-picker blocked modifier */
+.rdp-blocked {
+  background-color: #d9534f !important; /* bootstrap red-ish */
+  color: white !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
