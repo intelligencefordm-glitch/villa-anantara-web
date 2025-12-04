@@ -40,7 +40,7 @@ export default function Home() {
           <nav className="hidden md:flex items-center gap-6 text-white text-sm font-bold">
             <a href="/" className="hover:opacity-80">Home</a>
             <a href="/rooms" className="hover:opacity-80">Rooms</a>
-            <a href="/#check-availability" className="hover:opacity-80">Check Availability</a>
+            <a href="/check" className="hover:opacity-80">Check Availability</a>
             <a href="/contact" className="hover:opacity-80">Contact</a>
           </nav>
         </div>
@@ -51,7 +51,7 @@ export default function Home() {
         >
           <a href="/" className="whitespace-nowrap">Home</a>
           <a href="/rooms" className="whitespace-nowrap">Rooms</a>
-          <a href="/#check-availability" className="whitespace-nowrap">Check Availability</a>
+          <a href="/check" className="whitespace-nowrap">Check Availability</a>
           <a href="/contact" className="whitespace-nowrap">Contact</a>
         </nav>
       </header>
