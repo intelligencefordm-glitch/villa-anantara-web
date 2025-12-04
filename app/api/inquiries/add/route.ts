@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_ANON_KEY!
 );
 
 export async function POST(req: Request) {
@@ -14,31 +14,46 @@ export async function POST(req: Request) {
       phone,
       email,
       guests,
+      occasion,
       check_in,
       check_out,
       nights,
-      message = null,
     } = body;
 
+    // Validation
     if (!name || !phone || !check_in || !check_out) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const { error } = await supabase.from("inquiries").insert([{
-      name,
-      phone,
-      email,
-      guests: guests ?? null,
-      check_in,
-      check_out,
-      nights: nights ?? null,
-      message,
-    }]);
+    // Insert into Supabase
+    const { error } = await supabase.from("inquiries").insert([
+      {
+        name,
+        phone,
+        email,
+        guests,
+        occassion: occasion,  // NEW COLUMN
+        check_in,
+        check_out,
+        nights,
+        payment_status: "Pending", // NEW COLUMN
+      },
+    ]);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) {
+      console.error("Error inserting:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Unknown error" }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
