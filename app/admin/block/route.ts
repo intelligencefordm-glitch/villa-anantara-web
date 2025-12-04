@@ -13,13 +13,12 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Insert unless exists
+    // Insert date (no returning option)
     const { error } = await supabase
       .from("blocked_dates")
-      .insert([{ date }], { returning: "minimal" });
+      .insert([{ date }]);
 
     if (error) {
-      // If unique constraint fails, still treat as success
       console.error("Supabase insert error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
