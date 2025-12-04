@@ -7,12 +7,13 @@ import { format } from "date-fns";
 
 export default function AdminCalendarPage() {
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState("");
+  const [adminPassword, setAdminPassword] = useState(""); // 👈 FIXED
   const [authed, setAuthed] = useState(false);
 
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // 👈 FIXED
 
   const mocha = "#C29F80";
   const red = "#B00020";
@@ -21,41 +22,42 @@ export default function AdminCalendarPage() {
   // LOAD BLOCKED DATES
   // -------------------------------
   const loadBlocked = async () => {
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const res = await fetch("/api/admin/blocked", {
-      method: "GET",
-      headers: {
-        "x-admin-password": adminPassword, // 👈 IMPORTANT
-      },
-    });
+    try {
+      const res = await fetch("/api/admin/blocked", {
+        method: "GET",
+        headers: {
+          "x-admin-password": adminPassword, // 👈 FIXED
+        },
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (!res.ok) throw new Error(json.error || "Failed");
+      if (!res.ok) throw new Error(json.error || "Failed");
 
-    setBlockedDates(
-      (json.blocked || []).map((item: any) => new Date(item.date))
-    );
-  } catch (err) {
-    console.error(err);
-    setError("Failed to load blocked dates.");
-  } finally {
-    setLoading(false);
-  }
-};
+      setBlockedDates(
+        (json.blocked || []).map((item: any) => item.date)
+      );
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load blocked dates.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // -------------------------------
   // LOGIN
   // -------------------------------
   function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (
-      passwordInput === process.env.NEXT_PUBLIC_ADMIN_PASSWORD ||
-      passwordInput === process.env.ADMIN_PASSWORD
-    ) {
-      setPassword(passwordInput);
+
+    const correctPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+
+    if (passwordInput === correctPassword) {
+      setAdminPassword(passwordInput); // 👈 FIXED
       setAuthed(true);
       setPasswordInput("");
       setError("");
@@ -65,7 +67,7 @@ export default function AdminCalendarPage() {
   }
 
   useEffect(() => {
-    if (authed) loadBlockedDates();
+    if (authed) loadBlocked(); // 👈 FIXED NAME
   }, [authed]);
 
   // -------------------------------
@@ -74,12 +76,11 @@ export default function AdminCalendarPage() {
   const handleDayClick = (day: Date) => {
     const iso = format(day, "yyyy-MM-dd");
 
-    setSelectedDates((prev) => {
-      if (prev.includes(iso)) {
-        return prev.filter((d) => d !== iso);
-      }
-      return [...prev, iso];
-    });
+    setSelectedDates((prev) =>
+      prev.includes(iso)
+        ? prev.filter((d) => d !== iso)
+        : [...prev, iso]
+    );
   };
 
   // -------------------------------
@@ -95,14 +96,14 @@ export default function AdminCalendarPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": password,
+          "x-admin-password": adminPassword, // 👈 FIXED
         },
         body: JSON.stringify({ dates: selectedDates }),
       });
 
       if (!res.ok) throw new Error("Failed to block dates");
 
-      await loadBlockedDates();
+      await loadBlocked();
       setSelectedDates([]);
     } catch (err) {
       console.error(err);
@@ -123,14 +124,14 @@ export default function AdminCalendarPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": password,
+          "x-admin-password": adminPassword, // 👈 FIXED
         },
         body: JSON.stringify({ dates: selectedDates }),
       });
 
       if (!res.ok) throw new Error("Failed to unblock dates");
 
-      await loadBlockedDates();
+      await loadBlocked();
       setSelectedDates([]);
     } catch (err) {
       console.error(err);
@@ -187,12 +188,12 @@ export default function AdminCalendarPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LEFT — CALENDAR */}
         <section className="bg-white p-6 rounded shadow">
           <div className="flex justify-between mb-4">
             <h2 className="text-lg font-semibold">Calendar</h2>
+
             <button
-              onClick={loadBlockedDates}
+              onClick={loadBlocked}
               className="px-3 py-1 rounded border"
             >
               Refresh
@@ -208,14 +209,8 @@ export default function AdminCalendarPage() {
               selectedDay: selectedDates.map((d) => new Date(d)),
             }}
             modifiersStyles={{
-              blocked: {
-                backgroundColor: red,
-                color: "white",
-              },
-              selectedDay: {
-                backgroundColor: "#0F1F0F",
-                color: "white",
-              },
+              blocked: { backgroundColor: red, color: "white" },
+              selectedDay: { backgroundColor: "#0F1F0F", color: "white" },
             }}
           />
 
@@ -238,7 +233,6 @@ export default function AdminCalendarPage() {
           </div>
         </section>
 
-        {/* RIGHT — BLOCKED DATES LIST */}
         <aside className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-3">Blocked Dates</h2>
 
@@ -250,9 +244,9 @@ export default function AdminCalendarPage() {
             {blockedDates.map((date) => (
               <li
                 key={date}
-                className="p-2 rounded bg-[#fff6f0] border flex justify-between"
+                className="p-2 rounded bg-[#fff6f0] border"
               >
-                <span>{format(new Date(date), "dd MMM yyyy")}</span>
+                {format(new Date(date), "dd MMM yyyy")}
               </li>
             ))}
           </ul>
