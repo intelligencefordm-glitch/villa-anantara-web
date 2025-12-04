@@ -1,32 +1,26 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-);
-
 export async function POST(req: Request) {
-  try {
-    const { date } = await req.json();
-    if (!date) {
-      return NextResponse.json({ error: "Missing date." }, { status: 400 });
-    }
-
-    const { error } = await supabase
-      .from("blocked_dates")
-      .delete()
-      .eq("date", date);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    return NextResponse.json(
-      { error: "Server error unblocking date." },
-      { status: 500 }
-    );
+  const password = req.headers.get("x-admin-password");
+  if (!password || password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const body = await req.json();
+  const { date } = body;
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { error } = await supabase
+    .from("blocked_dates")
+    .delete()
+    .eq("date", date);
+
+  return error
+    ? NextResponse.json({ error: error.message }, { status: 500 })
+    : NextResponse.json({ success: true });
 }
