@@ -1,194 +1,160 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import { DayPicker, DateRange } from "react-day-picker";
+import React, { useEffect, useState } from "react";
+import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { differenceInDays, format } from "date-fns";
+import { format } from "date-fns";
 
-export default function CheckAvailabilityPage() {
-  const [range, setRange] = useState<DateRange>({
-    from: undefined,
-    to: undefined,
-  });
+export default function CheckPage() {
+  const mocha = "#C29F80";
+  const [range, setRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [showForm, setShowForm] = useState(false);
 
-  const [phone, setPhone] = useState("");
+  // form fields
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [guests, setGuests] = useState(1);
+  const [guests, setGuests] = useState(2);
   const [occasion, setOccasion] = useState("Stay");
 
-  const formRef = useRef<HTMLDivElement | null>(null);
+  const today = new Date();
 
-  const mocha = "#C29F80";
-
-  // Auto scroll after user selects check-in date
+  // auto-open form when both dates are selected
   useEffect(() => {
-    if (range.from && formRef.current) {
-      formRef.current.scrollIntoView({ behavior: "smooth" });
+    if (range.from && range.to) {
+      setShowForm(true);
+      setTimeout(() => {
+        document.getElementById("guest-form")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
     }
   }, [range]);
 
-  const nights =
-    range.from && range.to ? differenceInDays(range.to, range.from) : 0;
+  const handleSubmit = async () => {
+    if (!range.from || !range.to) return;
 
-  // Disable past dates
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+    const payload = {
+      name,
+      phone,
+      email,
+      guests,
+      occasion,
+      check_in: format(range.from, "yyyy-MM-dd"),
+      check_out: format(range.to, "yyyy-MM-dd"),
+      nights:
+        (range.to.getTime() - range.from.getTime()) /
+        (1000 * 60 * 60 * 24),
+    };
 
-  const resetDates = () =>
-    setRange({
-      from: undefined,
-      to: undefined,
+    await fetch("/api/inquire", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
-  const handleWhatsApp = () => {
-    if (!range.from || !range.to)
-      return alert("Please select your dates first");
-    if (!name) return alert("Please enter your name");
-    if (!phone) return alert("Please enter your phone number");
-
-    const msg = encodeURIComponent(
-      `Hello! I would like to book Villa Anantara.\n\n` +
-        `👤 Name: ${name}\n` +
-        `📱 Phone: ${phone}\n` +
-        `✉️ Email: ${email || "Not provided"}\n` +
-        `🎉 Occasion: ${occasion}\n` +
-        `👥 Guests: ${guests}\n\n` +
-        `📅 Check-in: ${format(range.from, "dd MMM yyyy")}\n` +
-        `📅 Check-out: ${format(range.to, "dd MMM yyyy")}\n` +
-        `🌙 Nights: ${nights}`
+    const waMessage = encodeURIComponent(
+      `New Booking Inquiry:\nName: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\nCheck-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
     );
 
-    window.open(`https://wa.me/918889777288?text=${msg}`, "_blank");
+    window.location.href = `https://wa.me/918889777288?text=${waMessage}`;
   };
 
   return (
-    <main className="min-h-screen bg-[#EFE5D5] p-6 pb-20">
-      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">
-        Check Availability
-      </h1>
+    <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
+      <div className="max-w-4xl mx-auto p-6">
 
-      {/* CALENDAR */}
-      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-[#0F1F0F] mb-6">
+          Check Availability
+        </h1>
+
         <DayPicker
           mode="range"
-          numberOfMonths={1}
           selected={range}
           onSelect={setRange}
+          numberOfMonths={1}
           disabled={{ before: today }}
-          modifiers={{
-            selected: range,
-            range_start: range.from,
-            range_end: range.to,
-          }}
           modifiersStyles={{
             selected: {
               backgroundColor: mocha,
               color: "white",
             },
-            range_start: {
-              backgroundColor: mocha,
-              color: "white",
-            },
-            range_end: {
-              backgroundColor: mocha,
-              color: "white",
-            },
           }}
         />
 
-        {/* RESET */}
-        <button
-          onClick={resetDates}
-          className="mt-3 underline text-sm text-[#0F1F0F] hover:opacity-70"
-        >
-          Reset dates
-        </button>
-      </div>
-
-      {/* GUEST DETAILS FORM */}
-      <div
-        ref={formRef}
-        className="p-6 rounded-lg max-w-3xl"
-        style={{ backgroundColor: mocha }}
-      >
-        <h2 className="text-xl font-semibold mb-4 text-white">
-          Guest Details
-        </h2>
-
-        <p className="text-white mb-1">Full name</p>
-        <input
-          className="w-full p-2 rounded mb-4 bg-white"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-
-        <p className="text-white mb-1">Phone (WhatsApp)</p>
-        <input
-          className="w-full p-2 rounded mb-4 bg-white"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-        />
-
-        <p className="text-white mb-1">Email (optional)</p>
-        <input
-          className="w-full p-2 rounded mb-4 bg-white"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-
-        <p className="text-white mb-1">Occasion</p>
-        <select
-          className="w-full p-2 rounded mb-4 bg-white"
-          value={occasion}
-          onChange={(e) => setOccasion(e.target.value)}
-        >
-          <option value="Stay">Stay</option>
-          <option value="Other">Other</option>
-        </select>
-
-        <p className="text-white mb-1">Guests</p>
-        <input
-          type="number"
-          min={1}
-          max={30}
-          className="w-full p-2 rounded mb-4 bg-white"
-          value={guests}
-          onChange={(e) => setGuests(Number(e.target.value))}
-        />
-
         {range.from && range.to && (
-          <div className="text-white text-sm mb-4">
-            <p>
-              <strong>Check-in:</strong>{" "}
-              {format(range.from, "dd MMM yyyy")}
-            </p>
-            <p>
-              <strong>Check-out:</strong>{" "}
-              {format(range.to, "dd MMM yyyy")}
-            </p>
-            <p>
-              <strong>Nights:</strong> {nights}
-            </p>
-          </div>
+          <p className="mt-3 text-[#0F1F0F] font-medium">
+            {`Selected: ${format(range.from, "dd MMM")} → ${format(
+              range.to,
+              "dd MMM"
+            )}`}
+          </p>
         )}
 
         <button
-          onClick={handleWhatsApp}
-          className="bg-[#0F1F0F] text-white px-5 py-2 rounded font-semibold hover:opacity-90"
+          onClick={() => setRange({ from: undefined, to: undefined })}
+          className="mt-4 underline"
         >
-          Confirm & Send on WhatsApp
+          Reset dates
         </button>
-      </div>
 
-      {/* GO BACK BUTTON */}
-      <a
-        href="/"
-        className="fixed bottom-6 left-6 flex items-center gap-2 bg-white text-[#0F1F0F] px-4 py-2 shadow rounded-full hover:scale-105 transition"
-      >
-        <span className="text-xl">←</span>
-        <span className="font-semibold">Go Back</span>
-      </a>
+        {showForm && (
+          <section
+            id="guest-form"
+            className="mt-10 p-6 rounded shadow"
+            style={{ backgroundColor: mocha, color: "white" }}
+          >
+            <h2 className="text-xl font-semibold mb-4">Guest Details</h2>
+
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                className="p-2 rounded text-black"
+                placeholder="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+
+              <input
+                className="p-2 rounded text-black"
+                placeholder="Phone Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+
+              <input
+                className="p-2 rounded text-black"
+                placeholder="Email (optional)"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
+              <input
+                className="p-2 rounded text-black"
+                type="number"
+                placeholder="Guests"
+                value={guests}
+                onChange={(e) => setGuests(Number(e.target.value))}
+              />
+
+              {/* Occasion */}
+              <select
+                className="p-2 rounded text-black"
+                value={occasion}
+                onChange={(e) => setOccasion(e.target.value)}
+              >
+                <option value="Stay">Stay</option>
+                <option value="Other">Other</option>
+              </select>
+
+              <button
+                onClick={handleSubmit}
+                className="w-full py-3 rounded font-bold mt-4"
+                style={{ backgroundColor: "#0F1F0F", color: "white" }}
+              >
+                Confirm & Send on WhatsApp
+              </button>
+            </div>
+          </section>
+        )}
+      </div>
     </main>
   );
 }
