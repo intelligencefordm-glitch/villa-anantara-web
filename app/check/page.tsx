@@ -12,11 +12,12 @@ export default function CheckAvailability() {
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
 
-  // guest form
+  // FORM STATES
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [guests, setGuests] = useState<number>(2);
+  const [occasion, setOccasion] = useState("Stay");
 
   const [warning, setWarning] = useState("");
   const [sending, setSending] = useState(false);
@@ -83,7 +84,6 @@ export default function CheckAvailability() {
     setWarning("");
   };
 
-  // form validation
   const validateForm = () => {
     if (!name.trim()) {
       setWarning("Please enter your name.");
@@ -105,11 +105,13 @@ export default function CheckAvailability() {
     if (!validateForm()) return;
 
     setSending(true);
+
     const payload = {
       name,
       phone,
       email,
       guests,
+      occasion,
       check_in: format(checkIn!, "yyyy-MM-dd"),
       check_out: format(checkOut!, "yyyy-MM-dd"),
       nights,
@@ -127,7 +129,7 @@ export default function CheckAvailability() {
         "dd MMM yyyy"
       )} to ${format(checkOut!, "dd MMM yyyy")} (${nights} nights) for ${
         payload.guests
-      } guests. My contact: ${payload.phone}${
+      } guests. Occasion: ${occasion}. My contact: ${payload.phone}${
         payload.email ? `, Email: ${payload.email}` : ""
       }.`;
 
@@ -177,7 +179,6 @@ export default function CheckAvailability() {
             }}
           />
 
-          {/* SECOND RESET BUTTON BELOW CALENDAR */}
           <div className="mt-4">
             <button onClick={resetDates} className="underline text-[#0F1F0F]">
               Reset dates
@@ -233,6 +234,17 @@ export default function CheckAvailability() {
           </div>
         </div>
 
+        {/* OCCASION FIELD */}
+        <label className="block mb-2 text-sm mt-3">Occasion</label>
+        <select
+          value={occasion}
+          onChange={(e) => setOccasion(e.target.value)}
+          className="w-full p-2 border rounded bg-white text-black"
+        >
+          <option value="Stay">Stay</option>
+          <option value="Other">Other</option>
+        </select>
+
         <div className="mt-4 text-white">
           <p>
             <strong>Check-in:</strong>{" "}
@@ -254,7 +266,7 @@ export default function CheckAvailability() {
             onClick={sendInquiry}
             disabled={sending}
             className="px-5 py-2 rounded text-white font-semibold"
-            style={{ backgroundColor: "#0F1F0F" }}
+            style={{ backgroundColor: "#C29F80" }}
           >
             {sending ? "Sending..." : "Confirm & Send on WhatsApp"}
           </button>
@@ -265,13 +277,12 @@ export default function CheckAvailability() {
         </div>
       </div>
 
-      {/* FLOATING GO BACK BUTTON */}
+      {/* GO BACK BUTTON */}
       <div className="fixed bottom-6 left-6 z-50 flex items-center gap-2">
         <button
           onClick={() => window.history.back()}
           className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
         >
-          {/* SVG Arrow */}
           <svg
             width="24"
             height="24"
