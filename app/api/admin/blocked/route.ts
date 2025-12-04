@@ -1,32 +1,22 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-);
-
-export async function GET() {
-  try {
-    const { data, error } = await supabase
-      .from("blocked_dates")
-      .select("*")
-      .order("date", { ascending: true });
-
-    if (error) {
-      console.error("Supabase error:", error);
-      return NextResponse.json(
-        { error: "Failed to load blocked dates." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ blocked: data || [] });
-  } catch (err) {
-    console.error("API error:", err);
-    return NextResponse.json(
-      { error: "Server error while loading blocked dates." },
-      { status: 500 }
-    );
+export async function GET(req: Request) {
+  const password = req.headers.get("x-admin-password");
+  if (!password || password !== process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  const { data, error } = await supabase
+    .from("blocked_dates")
+    .select("*");
+
+  return error
+    ? NextResponse.json({ error: error.message }, { status: 500 })
+    : NextResponse.json({ blocked: data });
 }
