@@ -20,7 +20,6 @@ export default function AdminCalendarPage() {
     try {
       const res = await fetch("/api/admin/blocked");
       const json = await res.json();
-      // API returns { blocked: [...] }
       const arr = json.blocked || [];
       setBlockedDates(arr.map((d: any) => new Date(d.date)));
     } catch (err) {
@@ -35,64 +34,64 @@ export default function AdminCalendarPage() {
     if (authed) loadBlocked();
   }, [authed]);
 
-  // Handler: block a date
+  // Add a blocked date
   const addBlock = async (date: Date) => {
     setError("");
     const dateString = format(date, "yyyy-MM-dd");
+
     try {
       const res = await fetch("/api/admin/block", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: dateString }),
       });
+
       const json = await res.json();
-      if (json.error) {
-        setError(json.error);
-      } else {
-        // optimistic refresh
-        await loadBlocked();
-      }
+      if (json.error) setError(json.error);
+      else loadBlocked();
     } catch (err) {
       console.error(err);
       setError("Failed to block date.");
     }
   };
 
-  // Handler: unblock a date
+  // Remove a blocked date
   const removeBlock = async (date: Date) => {
     setError("");
     const dateString = format(date, "yyyy-MM-dd");
+
     try {
       const res = await fetch("/api/admin/unblock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date: dateString }),
       });
+
       const json = await res.json();
-      if (json.error) {
-        setError(json.error);
-      } else {
-        await loadBlocked();
-      }
+      if (json.error) setError(json.error);
+      else loadBlocked();
     } catch (err) {
       console.error(err);
       setError("Failed to unblock date.");
     }
   };
 
-  // Clicking a day toggles block/unblock
+  // Click toggle function
   const handleDayClick = (day: Date) => {
     const iso = format(day, "yyyy-MM-dd");
+
     const exists = blockedDates.some(
       (d) => format(d, "yyyy-MM-dd") === iso
     );
+
     if (exists) removeBlock(day);
     else addBlock(day);
   };
 
-  // Simple login (client-side check) — matches other admin pages
+  // Admin login
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (passwordInput === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setAuthed(true);
       setPasswordInput("");
@@ -102,6 +101,7 @@ export default function AdminCalendarPage() {
     }
   };
 
+  // Render login page
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
@@ -131,17 +131,24 @@ export default function AdminCalendarPage() {
     );
   }
 
+  // Render calendar UI
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6">
-      <header className="mb-6 p-4 rounded" style={{ backgroundColor: "#C29F80", color: "white" }}>
+      <header
+        className="mb-6 p-4 rounded"
+        style={{ backgroundColor: "#C29F80", color: "white" }}
+      >
         <h1 className="text-2xl font-bold">Manage Calendar</h1>
         <p className="opacity-90">Click a date to block or unblock it.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        {/* CALENDAR PANEL */}
         <section className="bg-white p-6 rounded shadow">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Calendar</h2>
+
             <div className="flex items-center gap-2">
               <button
                 onClick={loadBlocked}
@@ -149,6 +156,7 @@ export default function AdminCalendarPage() {
               >
                 Refresh
               </button>
+
               <button
                 onClick={() => { setAuthed(false); setBlockedDates([]); }}
                 className="px-3 py-1 rounded border bg-red-600 text-white"
@@ -164,7 +172,7 @@ export default function AdminCalendarPage() {
             <DayPicker
               mode="single"
               numberOfMonths={1}
-              selected={[]}
+              selected={undefined}   // 🔥 FIXED ERROR HERE
               onDayClick={handleDayClick}
               modifiers={{ blocked: blockedDates }}
               modifiersStyles={{
@@ -177,37 +185,46 @@ export default function AdminCalendarPage() {
           )}
 
           {error && <p className="text-red-600 mt-3">{error}</p>}
+
           <p className="mt-3 text-sm text-gray-600">
-            Click a date to toggle block. Blocked dates are shown in mocha.
+            Blocked dates appear in mocha brown.
           </p>
         </section>
 
+        {/* BLOCKED DATES LIST PANEL */}
         <aside className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-3">Blocked Dates</h2>
 
           <div className="space-y-2 max-h-[60vh] overflow-auto">
-            {blockedDates.length === 0 && <p className="text-gray-500">No blocked dates.</p>}
+
+            {blockedDates.length === 0 && (
+              <p className="text-gray-500">No blocked dates.</p>
+            )}
 
             {blockedDates.map((d) => {
               const iso = format(d, "yyyy-MM-dd");
               return (
-                <div key={iso} className="flex items-center justify-between bg-[#fff6f0] p-2 rounded">
+                <div
+                  key={iso}
+                  className="flex items-center justify-between bg-[#fff6f0] p-2 rounded"
+                >
                   <div>{format(d, "dd MMM yyyy")}</div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => removeBlock(d)}
-                      className="px-2 py-1 text-sm rounded border bg-white"
-                    >
-                      Unblock
-                    </button>
-                  </div>
+
+                  <button
+                    onClick={() => removeBlock(d)}
+                    className="px-2 py-1 text-sm rounded border bg-white"
+                  >
+                    Unblock
+                  </button>
                 </div>
               );
             })}
           </div>
 
           <div className="mt-6">
-            <p className="text-sm text-gray-600">Tip: blocked dates prevent guests from selecting those days on the public booking page.</p>
+            <p className="text-sm text-gray-600">
+              These dates cannot be booked by guests.
+            </p>
           </div>
         </aside>
       </div>
