@@ -1,311 +1,202 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { format, eachDayOfInterval, isBefore } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 
-export default function CheckAvailability() {
-  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
-  const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
-
-  // Guest form fields
-  const [name, setName] = useState("");
+export default function CheckAvailabilityPage() {
+  const [range, setRange] = useState<{ from?: Date; to?: Date }>({});
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [guests, setGuests] = useState<number>(2);
+  const [guests, setGuests] = useState(1);
   const [occasion, setOccasion] = useState("Stay");
 
-  const [warning, setWarning] = useState("");
-  const [sending, setSending] = useState(false);
-
-  // For auto-scroll after date selection
   const formRef = useRef<HTMLDivElement | null>(null);
 
+  const mocha = "#C29F80";
+
+  // AUTO SCROLL TO FORM AFTER DATE SELECTION
   useEffect(() => {
-    loadBlockedDates();
-  }, []);
-
-  async function loadBlockedDates() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/blocks/list");
-      const json = await res.json();
-      if (Array.isArray(json)) {
-        setBlockedDates(json.map((d: any) => new Date(d.date)));
-      }
-    } catch (e) {
-      console.error("Failed load blocked", e);
-    } finally {
-      setLoading(false);
+    if (range.from && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }
-
-  const rangeHasBlockedDates = (start: Date, end: Date) => {
-    const allDays = eachDayOfInterval({ start, end });
-    return allDays.some((d) =>
-      blockedDates.some(
-        (b) => format(b, "yyyy-MM-dd") === format(d, "yyyy-MM-dd")
-      )
-    );
-  };
-
-  const handleSelect = (day: Date) => {
-    setWarning("");
-
-    // First date selection
-    if (!checkIn) {
-      setCheckIn(day);
-      setCheckOut(undefined);
-      return;
-    }
-
-    // Same day check-in/out — not allowed
-    if (format(day, "yyyy-MM-dd") === format(checkIn, "yyyy-MM-dd")) {
-      setWarning("Check-out must be at least 1 day after check-in.");
-      return;
-    }
-
-    // Clicking before check-in resets selection
-    if (isBefore(day, checkIn)) {
-      setCheckIn(day);
-      setCheckOut(undefined);
-      return;
-    }
-
-    // Range overlaps blocked dates
-    if (rangeHasBlockedDates(checkIn, day)) {
-      setWarning("Selected dates include unavailable dates.");
-      return;
-    }
-
-    // Valid range chosen
-    setCheckOut(day);
-
-    // Auto-scroll to form
-    if (formRef.current) {
-      setTimeout(() => {
-        formRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 150);
-    }
-  };
+  }, [range]);
 
   const nights =
-    checkIn && checkOut
-      ? eachDayOfInterval({ start: checkIn, end: checkOut }).length - 1
-      : 0;
+    range.from && range.to ? differenceInDays(range.to, range.from) : 0;
 
-  const resetDates = () => {
-    setCheckIn(undefined);
-    setCheckOut(undefined);
-    setWarning("");
-  };
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Clean midnight
 
-  const validateForm = () => {
-    if (!name.trim()) {
-      setWarning("Please enter your name.");
-      return false;
-    }
-    if (!phone.trim()) {
-      setWarning("Please enter your phone number.");
-      return false;
-    }
-    if (!checkIn || !checkOut) {
-      setWarning("Please select check-in and check-out dates.");
-      return false;
-    }
-    return true;
-  };
+  // RESET FUNCTION
+  const resetDates = () => setRange({});
 
-  const sendInquiry = async () => {
-    setWarning("");
-    if (!validateForm()) return;
+  // SEND WHATSAPP MESSAGE
+  const handleWhatsApp = () => {
+    if (!range.from || !range.to) return alert("Select your dates first!");
+    if (!name) return alert("Please enter your name");
+    if (!phone) return alert("Please enter your phone number");
 
-    setSending(true);
+    const msg = encodeURIComponent(
+      `Hello, I would like to book Villa Anantara.\n\n` +
+        `👤 Name: ${name}\n` +
+        `📱 Phone: ${phone}\n` +
+        `✉️ Email: ${email || "Not provided"}\n` +
+        `🎉 Occasion: ${occasion}\n` +
+        `👥 Guests: ${guests}\n\n` +
+        `📅 Check-in: ${format(range.from, "dd MMM yyyy")}\n` +
+        `📅 Check-out: ${format(range.to, "dd MMM yyyy")}\n` +
+        `🌙 Nights: ${nights}\n`
+    );
 
-    const payload = {
-      name,
-      phone,
-      email,
-      guests,
-      occasion,
-      check_in: format(checkIn!, "yyyy-MM-dd"),
-      check_out: format(checkOut!, "yyyy-MM-dd"),
-      nights,
-    };
-
-    try {
-      await fetch("/api/inquiries/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const waMsg = `Hi, I am ${payload.name}. I want to book Villa Anantara from ${format(
-        checkIn!,
-        "dd MMM yyyy"
-      )} to ${format(checkOut!, "dd MMM yyyy")} (${nights} nights) for ${
-        payload.guests
-      } guests. Occasion: ${occasion}. My contact: ${payload.phone}${
-        payload.email ? `, Email: ${payload.email}` : ""
-      }.`;
-
-      window.open(
-        `https://wa.me/918889777288?text=${encodeURIComponent(waMsg)}`,
-        "_blank"
-      );
-    } catch (err) {
-      console.error(err);
-      setWarning("Failed to send request.");
-    } finally {
-      setSending(false);
-    }
+    window.open(`https://wa.me/918889777288?text=${msg}`, "_blank");
   };
 
   return (
-    <main
-      className="min-h-screen px-6 py-10"
-      style={{ backgroundColor: "#EFE5D5" }}
-    >
-      <h1 className="text-3xl font-bold text-[#0F1F0F] mb-4">Check Availability</h1>
-
-      {warning && (
-        <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">{warning}</div>
-      )}
+    <main className="min-h-screen bg-[#EFE5D5] p-6 pb-20">
+      {/* TITLE */}
+      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">
+        Check Availability
+      </h1>
 
       {/* CALENDAR */}
-      {loading ? (
-        <p>Loading calendar...</p>
-      ) : (
-        <>
-          <DayPicker
-            mode="range"
-            numberOfMonths={1}
-            selected={{ from: checkIn, to: checkOut }}
-            onDayClick={handleSelect}
-            disabled={blockedDates}
-            modifiers={{ blocked: blockedDates }}
-            modifiersStyles={{
-              selected: {
-                backgroundColor: "#C29F80",
-                color: "white",
-              },
-              blocked: {
-                backgroundColor: "#A67C5A",
-                color: "white",
-              },
-            }}
-          />
+      <div className="mb-10">
+        <DayPicker
+          mode="range"
+          selected={range}
+          onSelect={setRange}
+          numberOfMonths={1}
+          disabled={{ before: today }}
+          modifiersClassNames={{
+            selected: "selected-day",
+          }}
+          styles={{
+            caption: { color: "#0F1F0F", fontWeight: "600" },
+            day: { borderRadius: "6px" },
+            selected: {
+              backgroundColor: mocha,
+              color: "white",
+            },
+            range_start: {
+              backgroundColor: mocha,
+              color: "white",
+            },
+            range_end: {
+              backgroundColor: mocha,
+              color: "white",
+            },
+          }}
+        />
 
-          <div className="mt-4">
-            <button onClick={resetDates} className="underline text-[#0F1F0F]">
-              Reset dates
-            </button>
-          </div>
-        </>
-      )}
+        {/* RESET DATES */}
+        <button
+          onClick={resetDates}
+          className="mt-3 underline text-sm text-[#0F1F0F] hover:opacity-70"
+        >
+          Reset dates
+        </button>
+      </div>
 
-      {/* FORM */}
+      {/* GUEST DETAILS FORM */}
       <div
         ref={formRef}
-        className="mt-8 max-w-2xl rounded shadow p-6"
-        style={{ backgroundColor: "#C29F80", color: "white" }}
+        className="p-6 rounded-lg max-w-3xl"
+        style={{ backgroundColor: mocha }}
       >
-        <h2 className="text-xl font-semibold mb-3">Guest Details</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">
+          Guest Details
+        </h2>
 
-        <label className="block mb-2 text-sm">Full name</label>
+        {/* FULL NAME */}
+        <p className="text-white mb-1">Full name</p>
         <input
+          className="w-full p-2 rounded mb-4"
+          style={{ background: "white" }}
+          placeholder="e.g. Rahul Sharma"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full p-2 border rounded mb-3 bg-white text-black"
         />
 
-        <label className="block mb-2 text-sm">Phone (WhatsApp)</label>
+        {/* PHONE */}
+        <p className="text-white mb-1">Phone (WhatsApp)</p>
         <input
+          className="w-full p-2 rounded mb-4"
+          style={{ background: "white" }}
+          placeholder="e.g. 9876543210"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          className="w-full p-2 border rounded mb-3 bg-white text-black"
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2 text-sm">Email (optional)</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded mb-3 bg-white text-black"
-            />
-          </div>
+        {/* EMAIL */}
+        <p className="text-white mb-1">Email (optional)</p>
+        <input
+          className="w-full p-2 rounded mb-4"
+          style={{ background: "white" }}
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-          <div>
-            <label className="block mb-2 text-sm">Guests</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value))}
-              className="w-full p-2 border rounded mb-3 bg-white text-black"
-            />
-          </div>
-        </div>
-
-        <label className="block mb-2 text-sm mt-2">Occasion</label>
+        {/* OCCASION */}
+        <p className="text-white mb-1">Occasion</p>
         <select
+          className="w-full p-2 rounded mb-4"
+          style={{ background: "white" }}
           value={occasion}
           onChange={(e) => setOccasion(e.target.value)}
-          className="w-full p-2 border rounded bg-white text-black"
         >
           <option value="Stay">Stay</option>
           <option value="Other">Other</option>
         </select>
 
-        <div className="mt-4">
-          <p><strong>Check-in:</strong> {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}</p>
-          <p><strong>Check-out:</strong> {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}</p>
-          {checkIn && checkOut && <p><strong>Nights:</strong> {nights}</p>}
-        </div>
+        {/* GUEST COUNT */}
+        <p className="text-white mb-1">Guests</p>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          className="w-full p-2 rounded mb-4"
+          style={{ background: "white" }}
+          value={guests}
+          onChange={(e) => setGuests(Number(e.target.value))}
+        />
 
-        <div className="mt-6 flex gap-3">
-          <button
-            onClick={sendInquiry}
-            disabled={sending}
-            className="px-5 py-2 rounded text-white font-semibold"
-            style={{ backgroundColor: "#C29F80" }}
-          >
-            {sending ? "Sending..." : "Confirm & Send on WhatsApp"}
-          </button>
+        {/* SUMMARY */}
+        {range.from && range.to && (
+          <div className="text-white text-sm mb-4">
+            <p>
+              <strong>Check-in:</strong>{" "}
+              {format(range.from, "dd MMM yyyy")}
+            </p>
+            <p>
+              <strong>Check-out:</strong>{" "}
+              {format(range.to, "dd MMM yyyy")}
+            </p>
+            <p>
+              <strong>Nights:</strong> {nights}
+            </p>
+          </div>
+        )}
 
-          <button onClick={resetDates} className="px-4 py-2 rounded border">
-            Reset dates
-          </button>
-        </div>
-      </div>
-
-      {/* GO BACK BUTTON */}
-      <div className="fixed bottom-6 left-6 z-50 flex items-center gap-2">
+        {/* BUTTONS */}
         <button
-          onClick={() => window.history.back()}
-          className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
+          onClick={handleWhatsApp}
+          className="bg-[#0F1F0F] text-white px-5 py-2 rounded font-semibold hover:opacity-90"
         >
-          <svg
-            width="24"
-            height="24"
-            fill="none"
-            stroke="black"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
+          Confirm & Send on WhatsApp
         </button>
-
-        <span className="text-[#0F1F0F] font-semibold">Go Back</span>
       </div>
+
+      {/* GO BACK BUTTON (FLOATING) */}
+      <a
+        href="/"
+        className="fixed bottom-6 left-6 flex items-center gap-2 bg-white text-[#0F1F0F] px-4 py-2 shadow rounded-full hover:scale-105 transition"
+      >
+        <span className="text-xl">←</span>
+        <span className="font-semibold">Go Back</span>
+      </a>
     </main>
   );
 }
