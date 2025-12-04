@@ -64,7 +64,6 @@ export default function CheckAvailability() {
       return;
     }
 
-    // check if blocked inside range
     if (rangeHasBlockedDates(checkIn, day)) {
       setWarning("Selected range includes unavailable dates. Choose different dates.");
       return;
@@ -84,7 +83,7 @@ export default function CheckAvailability() {
     setWarning("");
   };
 
-  // Basic validation for inquiry form
+  // form validation
   const validateForm = () => {
     if (!name.trim()) {
       setWarning("Please enter your name.");
@@ -98,59 +97,47 @@ export default function CheckAvailability() {
       setWarning("Please select check-in and check-out dates.");
       return false;
     }
-    if (rangeHasBlockedDates(checkIn!, checkOut!)) {
-      setWarning("Selected dates are not available.");
-      return false;
-    }
     return true;
   };
 
-  // Save inquiry to DB then open WhatsApp
   const sendInquiry = async () => {
     setWarning("");
     if (!validateForm()) return;
 
     setSending(true);
     const payload = {
-      name: name.trim(),
-      phone: phone.trim(),
-      email: email.trim() || null,
-      guests: guests ?? null,
+      name,
+      phone,
+      email,
+      guests,
       check_in: format(checkIn!, "yyyy-MM-dd"),
       check_out: format(checkOut!, "yyyy-MM-dd"),
       nights,
-      message: `Website inquiry`,
     };
 
     try {
-      // Save to Supabase via server API route
-      const res = await fetch("/api/inquiries/add", {
+      await fetch("/api/inquiries/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const json = await res.json();
-      if (json?.error) {
-        console.error("Save inquiry error", json);
-        setWarning("Could not save inquiry. Please try again.");
-        setSending(false);
-        return;
-      }
 
-      // Build WhatsApp message
-      const waMsg = `Hi, I am ${payload.name}. I would like to book Villa Anantara from ${format(
+      const waMsg = `Hi, I am ${payload.name}. I want to book Villa Anantara from ${format(
         checkIn!,
         "dd MMM yyyy"
-      )} to ${format(checkOut!, "dd MMM yyyy")} (${nights} nights) for ${payload.guests || "N/A"} guests. Phone: ${payload.phone}. Email: ${
-        payload.email || "N/A"
-      }`;
+      )} to ${format(checkOut!, "dd MMM yyyy")} (${nights} nights) for ${
+        payload.guests
+      } guests. My contact: ${payload.phone}${
+        payload.email ? `, Email: ${payload.email}` : ""
+      }.`;
 
-      // open whatsapp
-      const waUrl = `https://wa.me/918889777288?text=${encodeURIComponent(waMsg)}`;
-      window.open(waUrl, "_blank");
+      window.open(
+        `https://wa.me/918889777288?text=${encodeURIComponent(waMsg)}`,
+        "_blank"
+      );
     } catch (err) {
       console.error(err);
-      setWarning("An error occurred while sending the inquiry.");
+      setWarning("Failed to send request.");
     } finally {
       setSending(false);
     }
@@ -170,22 +157,36 @@ export default function CheckAvailability() {
       {loading ? (
         <p>Loading calendar...</p>
       ) : (
-        <DayPicker
-          mode="range"
-          selected={{ from: checkIn, to: checkOut }}
-          onDayClick={handleSelect}
-          disabled={blockedDates}
-          modifiers={{ blocked: blockedDates }}
-          modifiersStyles={{
-            blocked: { color: "white", backgroundColor: "#C29F80", opacity: 0.95 },
-          }}
-          numberOfMonths={2}
-        />
+        <>
+          <DayPicker
+            mode="range"
+            numberOfMonths={1}
+            selected={{ from: checkIn, to: checkOut }}
+            onDayClick={handleSelect}
+            disabled={blockedDates}
+            modifiers={{ blocked: blockedDates }}
+            modifiersStyles={{
+              selected: {
+                backgroundColor: "#C29F80",
+                color: "white",
+              },
+              blocked: {
+                backgroundColor: "#A67C5A",
+                color: "white",
+              },
+            }}
+          />
+
+          {/* SECOND RESET BUTTON BELOW CALENDAR */}
+          <div className="mt-4">
+            <button onClick={resetDates} className="underline text-[#0F1F0F]">
+              Reset dates
+            </button>
+          </div>
+        </>
       )}
 
-      {/* =========================
-          GUEST DETAILS BOX
-      ========================= */}
+      {/* GUEST DETAILS */}
       <div
         className="mt-8 max-w-2xl rounded shadow p-6"
         style={{ backgroundColor: "#C29F80", color: "white" }}
@@ -232,7 +233,7 @@ export default function CheckAvailability() {
           </div>
         </div>
 
-        <div className="mt-4">
+        <div className="mt-4 text-white">
           <p>
             <strong>Check-in:</strong>{" "}
             {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}
@@ -264,16 +265,27 @@ export default function CheckAvailability() {
         </div>
       </div>
 
-      {/* =========================
-          FLOATING GO BACK BUTTON
-      ========================= */}
-      <div className="fixed bottom-6 left-6 z-50">
+      {/* FLOATING GO BACK BUTTON */}
+      <div className="fixed bottom-6 left-6 z-50 flex items-center gap-2">
         <button
           onClick={() => window.history.back()}
-          className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
+          className="w-12 h-12 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
         >
-          <img src="/icons/back.png" className="w-6 h-6" alt="Go Back" />
+          {/* SVG Arrow */}
+          <svg
+            width="24"
+            height="24"
+            fill="none"
+            stroke="black"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
         </button>
+
+        <span className="text-[#0F1F0F] font-semibold">Go Back</span>
       </div>
     </main>
   );
