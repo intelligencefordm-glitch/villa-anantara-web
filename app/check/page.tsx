@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format, eachDayOfInterval, isBefore } from "date-fns";
@@ -12,7 +12,7 @@ export default function CheckAvailability() {
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
 
-  // FORM STATES
+  // Guest form fields
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +21,9 @@ export default function CheckAvailability() {
 
   const [warning, setWarning] = useState("");
   const [sending, setSending] = useState(false);
+
+  // For auto-scroll after date selection
+  const formRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     loadBlockedDates();
@@ -53,24 +56,41 @@ export default function CheckAvailability() {
   const handleSelect = (day: Date) => {
     setWarning("");
 
+    // First date selection
     if (!checkIn) {
       setCheckIn(day);
       setCheckOut(undefined);
       return;
     }
 
+    // Same day check-in/out — not allowed
+    if (format(day, "yyyy-MM-dd") === format(checkIn, "yyyy-MM-dd")) {
+      setWarning("Check-out must be at least 1 day after check-in.");
+      return;
+    }
+
+    // Clicking before check-in resets selection
     if (isBefore(day, checkIn)) {
       setCheckIn(day);
       setCheckOut(undefined);
       return;
     }
 
+    // Range overlaps blocked dates
     if (rangeHasBlockedDates(checkIn, day)) {
-      setWarning("Selected range includes unavailable dates. Choose different dates.");
+      setWarning("Selected dates include unavailable dates.");
       return;
     }
 
+    // Valid range chosen
     setCheckOut(day);
+
+    // Auto-scroll to form
+    if (formRef.current) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 150);
+    }
   };
 
   const nights =
@@ -156,6 +176,7 @@ export default function CheckAvailability() {
         <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">{warning}</div>
       )}
 
+      {/* CALENDAR */}
       {loading ? (
         <p>Loading calendar...</p>
       ) : (
@@ -187,8 +208,9 @@ export default function CheckAvailability() {
         </>
       )}
 
-      {/* GUEST DETAILS */}
+      {/* FORM */}
       <div
+        ref={formRef}
         className="mt-8 max-w-2xl rounded shadow p-6"
         style={{ backgroundColor: "#C29F80", color: "white" }}
       >
@@ -199,7 +221,6 @@ export default function CheckAvailability() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full p-2 border rounded mb-3 bg-white text-black"
-          placeholder="e.g. Rahul Sharma"
         />
 
         <label className="block mb-2 text-sm">Phone (WhatsApp)</label>
@@ -207,7 +228,6 @@ export default function CheckAvailability() {
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           className="w-full p-2 border rounded mb-3 bg-white text-black"
-          placeholder="+91 9xxxxxxxxx"
         />
 
         <div className="grid grid-cols-2 gap-4">
@@ -217,7 +237,6 @@ export default function CheckAvailability() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2 border rounded mb-3 bg-white text-black"
-              placeholder="you@example.com"
             />
           </div>
 
@@ -234,8 +253,7 @@ export default function CheckAvailability() {
           </div>
         </div>
 
-        {/* OCCASION FIELD */}
-        <label className="block mb-2 text-sm mt-3">Occasion</label>
+        <label className="block mb-2 text-sm mt-2">Occasion</label>
         <select
           value={occasion}
           onChange={(e) => setOccasion(e.target.value)}
@@ -245,20 +263,10 @@ export default function CheckAvailability() {
           <option value="Other">Other</option>
         </select>
 
-        <div className="mt-4 text-white">
-          <p>
-            <strong>Check-in:</strong>{" "}
-            {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}
-          </p>
-          <p>
-            <strong>Check-out:</strong>{" "}
-            {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}
-          </p>
-          {checkIn && checkOut && (
-            <p>
-              <strong>Nights:</strong> {nights}
-            </p>
-          )}
+        <div className="mt-4">
+          <p><strong>Check-in:</strong> {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}</p>
+          <p><strong>Check-out:</strong> {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}</p>
+          {checkIn && checkOut && <p><strong>Nights:</strong> {nights}</p>}
         </div>
 
         <div className="mt-6 flex gap-3">
