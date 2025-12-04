@@ -3,10 +3,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { format, differenceInDays } from "date-fns";
+import { differenceInDays, format } from "date-fns";
 
 export default function CheckAvailabilityPage() {
-  // ⭐ FIXED: DateRange must always have from/to keys (can be undefined)
   const [range, setRange] = useState<DateRange>({
     from: undefined,
     to: undefined,
@@ -22,7 +21,7 @@ export default function CheckAvailabilityPage() {
 
   const mocha = "#C29F80";
 
-  // AUTO SCROLL TO FORM AFTER DATES SELECTED
+  // Auto scroll after user selects check-in date
   useEffect(() => {
     if (range.from && formRef.current) {
       formRef.current.scrollIntoView({ behavior: "smooth" });
@@ -32,25 +31,24 @@ export default function CheckAvailabilityPage() {
   const nights =
     range.from && range.to ? differenceInDays(range.to, range.from) : 0;
 
+  // Disable past dates
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // RESET FUNCTION
   const resetDates = () =>
     setRange({
       from: undefined,
       to: undefined,
     });
 
-  // SEND WHATSAPP MESSAGE
   const handleWhatsApp = () => {
     if (!range.from || !range.to)
-      return alert("Please select your dates first.");
-    if (!name) return alert("Please enter your name.");
-    if (!phone) return alert("Please enter your phone number.");
+      return alert("Please select your dates first");
+    if (!name) return alert("Please enter your name");
+    if (!phone) return alert("Please enter your phone number");
 
     const msg = encodeURIComponent(
-      `Hello, I would like to book Villa Anantara.\n\n` +
+      `Hello! I would like to book Villa Anantara.\n\n` +
         `👤 Name: ${name}\n` +
         `📱 Phone: ${phone}\n` +
         `✉️ Email: ${email || "Not provided"}\n` +
@@ -58,7 +56,7 @@ export default function CheckAvailabilityPage() {
         `👥 Guests: ${guests}\n\n` +
         `📅 Check-in: ${format(range.from, "dd MMM yyyy")}\n` +
         `📅 Check-out: ${format(range.to, "dd MMM yyyy")}\n` +
-        `🌙 Nights: ${nights}\n`
+        `🌙 Nights: ${nights}`
     );
 
     window.open(`https://wa.me/918889777288?text=${msg}`, "_blank");
@@ -78,12 +76,12 @@ export default function CheckAvailabilityPage() {
           selected={range}
           onSelect={setRange}
           disabled={{ before: today }}
-          modifiersClassNames={{
-            selected: "selected-day",
+          modifiers={{
+            selected: range,
+            range_start: range.from,
+            range_end: range.to,
           }}
-          styles={{
-            caption: { color: "#0F1F0F", fontWeight: "600" },
-            day: { borderRadius: "6px" },
+          modifiersStyles={{
             selected: {
               backgroundColor: mocha,
               color: "white",
@@ -102,13 +100,13 @@ export default function CheckAvailabilityPage() {
         {/* RESET */}
         <button
           onClick={resetDates}
-          className="mt-3 underline text-[#0F1F0F] text-sm hover:opacity-70"
+          className="mt-3 underline text-sm text-[#0F1F0F] hover:opacity-70"
         >
           Reset dates
         </button>
       </div>
 
-      {/* GUEST DETAILS */}
+      {/* GUEST DETAILS FORM */}
       <div
         ref={formRef}
         className="p-6 rounded-lg max-w-3xl"
@@ -118,34 +116,27 @@ export default function CheckAvailabilityPage() {
           Guest Details
         </h2>
 
-        {/* NAME */}
-        <p className="text-white mb-1">Full Name</p>
+        <p className="text-white mb-1">Full name</p>
         <input
           className="w-full p-2 rounded mb-4 bg-white"
-          placeholder="e.g. Rahul Sharma"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
 
-        {/* PHONE */}
         <p className="text-white mb-1">Phone (WhatsApp)</p>
         <input
           className="w-full p-2 rounded mb-4 bg-white"
-          placeholder="9876543210"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
         />
 
-        {/* EMAIL */}
         <p className="text-white mb-1">Email (optional)</p>
         <input
           className="w-full p-2 rounded mb-4 bg-white"
-          placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        {/* OCCASION */}
         <p className="text-white mb-1">Occasion</p>
         <select
           className="w-full p-2 rounded mb-4 bg-white"
@@ -156,7 +147,6 @@ export default function CheckAvailabilityPage() {
           <option value="Other">Other</option>
         </select>
 
-        {/* GUESTS */}
         <p className="text-white mb-1">Guests</p>
         <input
           type="number"
@@ -167,7 +157,6 @@ export default function CheckAvailabilityPage() {
           onChange={(e) => setGuests(Number(e.target.value))}
         />
 
-        {/* SUMMARY */}
         {range.from && range.to && (
           <div className="text-white text-sm mb-4">
             <p>
@@ -184,7 +173,6 @@ export default function CheckAvailabilityPage() {
           </div>
         )}
 
-        {/* BUTTON */}
         <button
           onClick={handleWhatsApp}
           className="bg-[#0F1F0F] text-white px-5 py-2 rounded font-semibold hover:opacity-90"
