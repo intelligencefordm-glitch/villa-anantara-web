@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { format, eachDayOfInterval, isBefore, isAfter } from "date-fns";
+import { format, eachDayOfInterval, isBefore } from "date-fns";
 
 export default function CheckAvailability() {
   const [blockedDates, setBlockedDates] = useState<Date[]>([]);
@@ -12,25 +12,34 @@ export default function CheckAvailability() {
   const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
   const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
 
+  // guest form
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [guests, setGuests] = useState<number>(2);
+
   const [warning, setWarning] = useState("");
-
-  // Load blocked dates from API
-  const loadBlockedDates = async () => {
-    setLoading(true);
-    const res = await fetch("/api/blocks/list");
-    const json = await res.json();
-
-    if (Array.isArray(json)) {
-      setBlockedDates(json.map((d: any) => new Date(d.date)));
-    }
-    setLoading(false);
-  };
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     loadBlockedDates();
   }, []);
 
-  // Helper: Check if the selected range includes a blocked date
+  async function loadBlockedDates() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/blocks/list");
+      const json = await res.json();
+      if (Array.isArray(json)) {
+        setBlockedDates(json.map((d: any) => new Date(d.date)));
+      }
+    } catch (e) {
+      console.error("Failed load blocked", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const rangeHasBlockedDates = (start: Date, end: Date) => {
     const allDays = eachDayOfInterval({ start, end });
     return allDays.some((d) =>
@@ -40,32 +49,27 @@ export default function CheckAvailability() {
     );
   };
 
-  // Handle selecting dates
   const handleSelect = (day: Date) => {
     setWarning("");
 
-    // STEP 1: If no check-in chosen → set check-in
     if (!checkIn) {
       setCheckIn(day);
       setCheckOut(undefined);
       return;
     }
 
-    // STEP 2: If selecting check-out
     if (isBefore(day, checkIn)) {
-      // restart selection
       setCheckIn(day);
       setCheckOut(undefined);
       return;
     }
 
-    // STEP 3: Check if range crosses blocked dates
+    // check if blocked inside range
     if (rangeHasBlockedDates(checkIn, day)) {
-      setWarning("Your selected dates include unavailable dates. Please choose again.");
+      setWarning("Selected range includes unavailable dates. Choose different dates.");
       return;
     }
 
-    // Valid range
     setCheckOut(day);
   };
 
@@ -74,32 +78,89 @@ export default function CheckAvailability() {
       ? eachDayOfInterval({ start: checkIn, end: checkOut }).length - 1
       : 0;
 
-  const getWhatsAppLink = () => {
-    if (!checkIn || !checkOut) return "#";
-
-    const msg = `Hi, I want to book Villa Anantara from ${format(
-      checkIn,
-      "dd MMM yyyy"
-    )} to ${format(checkOut, "dd MMM yyyy")} (${nights} nights).`;
-
-    return `https://wa.me/918889777288?text=${encodeURIComponent(msg)}`;
-  };
-
   const resetDates = () => {
     setCheckIn(undefined);
     setCheckOut(undefined);
     setWarning("");
   };
 
+  // Basic validation for inquiry form
+  const validateForm = () => {
+    if (!name.trim()) {
+      setWarning("Please enter your name.");
+      return false;
+    }
+    if (!phone.trim()) {
+      setWarning("Please enter your phone number.");
+      return false;
+    }
+    if (!checkIn || !checkOut) {
+      setWarning("Please select check-in and check-out dates.");
+      return false;
+    }
+    if (rangeHasBlockedDates(checkIn!, checkOut!)) {
+      setWarning("Selected dates are not available.");
+      return false;
+    }
+    return true;
+  };
+
+  // Save inquiry to DB then open WhatsApp
+  const sendInquiry = async () => {
+    setWarning("");
+    if (!validateForm()) return;
+
+    setSending(true);
+    const payload = {
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email.trim() || null,
+      guests: guests ?? null,
+      check_in: format(checkIn!, "yyyy-MM-dd"),
+      check_out: format(checkOut!, "yyyy-MM-dd"),
+      nights,
+      message: `Website inquiry`,
+    };
+
+    try {
+      // Save to Supabase via server API route
+      const res = await fetch("/api/inquiries/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (json?.error) {
+        console.error("Save inquiry error", json);
+        setWarning("Could not save inquiry. Please try again.");
+        setSending(false);
+        return;
+      }
+
+      // Build WhatsApp message
+      const waMsg = `Hi, I am ${payload.name}. I would like to book Villa Anantara from ${format(
+        checkIn!,
+        "dd MMM yyyy"
+      )} to ${format(checkOut!, "dd MMM yyyy")} (${nights} nights) for ${payload.guests || "N/A"} guests. Phone: ${payload.phone}. Email: ${
+        payload.email || "N/A"
+      }`;
+
+      // open whatsapp
+      const waUrl = `https://wa.me/918889777288?text=${encodeURIComponent(waMsg)}`;
+      window.open(waUrl, "_blank");
+    } catch (err) {
+      console.error(err);
+      setWarning("An error occurred while sending the inquiry.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <main className="min-h-screen px-6 py-10" style={{ backgroundColor: "#EFE5D5" }}>
-      <h1 className="text-3xl font-bold text-[#0F1F0F] mb-6">Check Availability</h1>
+      <h1 className="text-3xl font-bold text-[#0F1F0F] mb-4">Check Availability</h1>
 
-      {warning && (
-        <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">
-          {warning}
-        </div>
-      )}
+      {warning && <div className="mb-4 p-3 bg-red-200 text-red-800 rounded">{warning}</div>}
 
       {loading ? (
         <p>Loading calendar...</p>
@@ -109,60 +170,84 @@ export default function CheckAvailability() {
           selected={{ from: checkIn, to: checkOut }}
           onDayClick={handleSelect}
           disabled={blockedDates}
-          modifiers={{
-            blocked: blockedDates,
-          }}
+          modifiers={{ blocked: blockedDates }}
           modifiersStyles={{
-            blocked: {
-              color: "white",
-              backgroundColor: "#C29F80",
-              opacity: 0.9,
-            },
+            blocked: { color: "white", backgroundColor: "#C29F80", opacity: 0.95 },
           }}
           numberOfMonths={2}
         />
       )}
 
-      <div className="mt-10 text-[#0F1F0F] space-y-4">
-        <h2 className="text-xl font-bold">Your Selection</h2>
+      <div className="mt-8 max-w-2xl bg-white rounded shadow p-6">
+        <h2 className="text-xl font-semibold mb-3">Guest details</h2>
 
-        <p>
-          <strong>Check-in:</strong>{" "}
-          {checkIn ? format(checkIn, "dd MMM yyyy") : "Not selected"}
-        </p>
+        <label className="block mb-2 text-sm">Full name</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full p-2 border rounded mb-3"
+          placeholder="e.g. Rahul Sharma"
+        />
 
-        <p>
-          <strong>Check-out:</strong>{" "}
-          {checkOut ? format(checkOut, "dd MMM yyyy") : "Not selected"}
-        </p>
+        <label className="block mb-2 text-sm">Phone (WhatsApp)</label>
+        <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="w-full p-2 border rounded mb-3"
+          placeholder="+91 9xxxxxxxxx"
+        />
 
-        {checkIn && checkOut && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block mb-2 text-sm">Email (optional)</label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-2 border rounded mb-3"
+              placeholder="you@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-2 text-sm">Guests</label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={guests}
+              onChange={(e) => setGuests(Number(e.target.value))}
+              className="w-full p-2 border rounded mb-3"
+            />
+          </div>
+        </div>
+
+        <div className="mt-4">
           <p>
-            <strong>Number of Nights:</strong> {nights}
+            <strong>Check-in:</strong> {checkIn ? format(checkIn, "dd MMM yyyy") : "-"}
           </p>
-        )}
+          <p>
+            <strong>Check-out:</strong> {checkOut ? format(checkOut, "dd MMM yyyy") : "-"}
+          </p>
+          {checkIn && checkOut && <p><strong>Nights:</strong> {nights}</p>}
+        </div>
 
-        {/* WhatsApp button */}
-        {checkIn && checkOut && (
-          <a
-            href={getWhatsAppLink()}
-            target="_blank"
-            className="inline-block px-6 py-3 rounded text-white font-bold"
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={sendInquiry}
+            disabled={sending}
+            className="px-5 py-2 rounded text-white font-semibold"
             style={{ backgroundColor: "#0F1F0F" }}
           >
-            Send Request on WhatsApp
-          </a>
-        )}
+            {sending ? "Sending..." : "Confirm & Send on WhatsApp"}
+          </button>
 
-        {/* Reset button */}
-        {(checkIn || checkOut) && (
           <button
             onClick={resetDates}
-            className="block mt-4 text-sm underline text-[#0F1F0F]"
+            className="px-4 py-2 rounded border"
           >
             Reset dates
           </button>
-        )}
+        </div>
       </div>
     </main>
   );
