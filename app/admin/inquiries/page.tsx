@@ -1,91 +1,139 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function AdminInquiries() {
-  const [password, setPassword] = useState("");
+export default function AdminInquiriesPage() {
+  const [passwordInput, setPasswordInput] = useState("");
   const [authed, setAuthed] = useState(false);
-  const [data, setData] = useState<any[]>([]);
 
-  const login = async () => {
-    const res = await fetch("/api/admin/auth", {
-      method: "POST",
-      body: JSON.stringify({ password }),
-    });
-    const json = await res.json();
-    if (json.success) {
+  const [loading, setLoading] = useState(false);
+  const [inquiries, setInquiries] = useState<any[]>([]);
+  const [error, setError] = useState("");
+
+  // -----------------------------
+  // AUTH CHECK
+  // -----------------------------
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (passwordInput === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setAuthed(true);
-      load();
+      setError("");
     } else {
-      alert("Wrong password");
+      setError("Incorrect password");
     }
-  };
+  }
 
-  const load = async () => {
-    const res = await fetch("/api/inquiries/list");
-    const json = await res.json();
-    setData(json);
-  };
+  // -----------------------------
+  // FETCH INQUIRIES
+  // -----------------------------
+  useEffect(() => {
+    if (!authed) return;
 
+    async function load() {
+      try {
+        setLoading(true);
+
+        const res = await fetch("/api/inquiries/list");
+        const json = await res.json();
+
+        // Extract real array safely
+        const arr = json.inquiries || [];
+
+        setInquiries(arr);
+      } catch (err) {
+        console.error(err);
+        setInquiries([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [authed]);
+
+  // -----------------------------
+  // LOGIN SCREEN
+  // -----------------------------
   if (!authed) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-[#EFE5D5]">
-        <div className="p-8 rounded shadow-lg bg-white">
-          <h1 className="font-bold text-xl mb-4">Admin Login</h1>
-          <input
-            type="password"
-            placeholder="Password"
-            className="border p-2 rounded w-64"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <button
-            onClick={login}
-            className="mt-4 px-4 py-2 bg-[#C29F80] text-white rounded w-full font-bold"
-          >
-            Login
-          </button>
+      <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
+        <div className="bg-white p-8 rounded shadow-md w-80">
+          <h2 className="text-xl font-semibold mb-4 text-center">Admin Login</h2>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              placeholder="Enter Admin Password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className="w-full border p-2 rounded"
+            />
+
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-[#0F1F0F] text-white py-2 rounded font-semibold"
+            >
+              Login
+            </button>
+          </form>
         </div>
       </main>
     );
   }
 
+  // -----------------------------
+  // ADMIN TABLE
+  // -----------------------------
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6">
-      <h1 className="text-3xl font-bold mb-4">All Inquiries</h1>
+      <h1 className="text-3xl font-bold mb-6">All Inquiries</h1>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow rounded">
-          <thead>
-            <tr className="bg-[#C29F80] text-white">
-              <th className="p-3">Name</th>
-              <th className="p-3">Phone</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Guests</th>
-              <th className="p-3">Occasion</th>
-              <th className="p-3">Check-in</th>
-              <th className="p-3">Check-out</th>
-              <th className="p-3">Nights</th>
-              <th className="p-3">Created</th>
-            </tr>
-          </thead>
+      {loading && <p className="text-lg">Loading inquiries...</p>}
 
-          <tbody>
-            {data.map((i) => (
-              <tr key={i.id} className="border-b">
-                <td className="p-3">{i.name}</td>
-                <td className="p-3">{i.phone}</td>
-                <td className="p-3">{i.email || "-"}</td>
-                <td className="p-3">{i.guests}</td>
-                <td className="p-3">{i.occasion}</td>
-                <td className="p-3">{i.check_in}</td>
-                <td className="p-3">{i.check_out}</td>
-                <td className="p-3">{i.nights}</td>
-                <td className="p-3">{new Date(i.created_at).toLocaleString()}</td>
+      {!loading && inquiries.length === 0 && (
+        <p className="text-gray-600">No inquiries found.</p>
+      )}
+
+      {!loading && inquiries.length > 0 && (
+        <div className="overflow-auto border rounded shadow bg-white">
+          <table className="min-w-full border-collapse text-sm">
+            <thead className="bg-[#C29F80] text-white">
+              <tr>
+                <th className="p-3 text-left">Name</th>
+                <th className="p-3 text-left">Phone</th>
+                <th className="p-3 text-left">Email</th>
+                <th className="p-3 text-left">Guests</th>
+                <th className="p-3 text-left">Occasion</th>
+                <th className="p-3 text-left">Check-in</th>
+                <th className="p-3 text-left">Check-out</th>
+                <th className="p-3 text-left">Submitted</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+
+            <tbody>
+              {inquiries.map((i) => (
+                <tr key={i.id} className="border-b hover:bg-gray-50">
+                  <td className="p-3">{i.full_name}</td>
+                  <td className="p-3">{i.phone}</td>
+                  <td className="p-3">{i.email || "-"}</td>
+                  <td className="p-3">{i.guests}</td>
+                  <td className="p-3">{i.occasion || "-"}</td>
+                  <td className="p-3">{i.check_in}</td>
+                  <td className="p-3">{i.check_out}</td>
+                  <td className="p-3">
+                    {i.created_at
+                      ? new Date(i.created_at).toLocaleString()
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }
