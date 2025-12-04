@@ -1,147 +1,131 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
-import { format } from "date-fns";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function AdminPage() {
-  const [password, setPassword] = useState("");
+export default function AdminDashboard() {
+  const router = useRouter();
+
+  const [passwordInput, setPasswordInput] = useState("");
   const [authed, setAuthed] = useState(false);
-  const [blockedDates, setBlockedDates] = useState<Date[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // === FETCH BLOCKED DATES ON LOGIN ===
-  const fetchBlocked = async () => {
-    setLoading(true);
-    const res = await fetch("/api/blocks/list");
-    const json = await res.json();
+  // -----------------------------
+  // Login check
+  // -----------------------------
+  function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
 
-    if (Array.isArray(json)) {
-      setBlockedDates(json.map((d: any) => new Date(d.date)));
-    }
-
-    setLoading(false);
-  };
-
-  // === LOGIN HANDLER ===
-  const handleLogin = async () => {
-    const res = await fetch("/api/admin/auth", {
-      method: "POST",
-      body: JSON.stringify({ password }),
-    });
-
-    const json = await res.json();
-
-    if (json.success) {
+    if (passwordInput === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       setAuthed(true);
-      fetchBlocked();
+      setError("");
     } else {
-      alert("Incorrect password");
+      setError("Incorrect password");
     }
-  };
+  }
 
-  // === CLICK DATE TO TOGGLE BLOCK ===
-  const toggleDate = async (date: Date) => {
-    const dateString = format(date, "yyyy-MM-dd");
-
-    const isBlocked = blockedDates.some(
-      (d) => format(d, "yyyy-MM-dd") === dateString
-    );
-
-    if (isBlocked) {
-      // Remove from DB
-      await fetch("/api/blocks/remove", {
-        method: "POST",
-        body: JSON.stringify({ date: dateString }),
-      });
-    } else {
-      // Add to DB
-      await fetch("/api/blocks/add", {
-        method: "POST",
-        body: JSON.stringify({ date: dateString, reason: "Admin block" }),
-      });
-    }
-
-    // Refresh calendar
-    fetchBlocked();
-  };
-
+  // -----------------------------
+  // LOGIN SCREEN
+  // -----------------------------
   if (!authed) {
     return (
-      <main
-        className="min-h-screen flex flex-col items-center justify-center"
-        style={{ backgroundColor: "#EFE5D5" }}
-      >
-        <div
-          className="p-8 rounded-lg shadow-lg"
-          style={{ backgroundColor: "#C29F80" }}
-        >
-          <h1 className="text-white text-xl font-bold mb-4 text-center">
-            Admin Login
-          </h1>
+      <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
+        <div className="bg-white p-8 rounded shadow-md w-80">
+          <h2 className="text-xl font-semibold mb-4 text-center">Admin Login</h2>
 
-          <input
-            type="password"
-            placeholder="Enter password"
-            className="px-4 py-2 rounded w-64 text-black"
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              placeholder="Enter Admin Password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className="w-full border p-2 rounded"
+            />
 
-          <button
-            onClick={handleLogin}
-            className="mt-4 px-4 py-2 rounded text-white font-bold w-full"
-            style={{ backgroundColor: "#0F1F0F" }}
-          >
-            Login
-          </button>
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-[#0F1F0F] text-white py-2 rounded font-semibold"
+            >
+              Login
+            </button>
+          </form>
         </div>
       </main>
     );
   }
 
-  // === ADMIN CALENDAR VIEW ===
+  // -----------------------------
+  // DASHBOARD UI
+  // -----------------------------
   return (
-    <main
-      className="min-h-screen px-6 py-10"
-      style={{ backgroundColor: "#EFE5D5" }}
-    >
-      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">Admin Panel</h1>
+    <main className="min-h-screen bg-[#EFE5D5] p-8">
+      <header
+        className="p-4 rounded mb-8"
+        style={{ backgroundColor: "#C29F80", color: "white" }}
+      >
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <p className="opacity-90">Manage Villa Anantara</p>
+      </header>
 
-      <p className="mb-4 text-[#0F1F0F]">
-        Click dates to block or unblock them.
-      </p>
+      {/* GRID BUTTONS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      {loading ? (
-        <p>Loading calendar...</p>
-      ) : (
-        <DayPicker
-          mode="multiple"
-          selected={blockedDates}
-          onDayClick={toggleDate}
-          modifiers={{
-            blocked: blockedDates,
-          }}
-          modifiersStyles={{
-            blocked: {
-              backgroundColor: "#C29F80",
-              color: "white",
-            },
-          }}
-        />
-      )}
+        {/* Inquiries */}
+        <button
+          onClick={() => router.push("/admin/inquiries")}
+          className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
+        >
+          <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">View Inquiries</h3>
+          <p className="text-gray-600">See all booking interest submissions.</p>
+        </button>
 
-      <h2 className="text-xl font-bold mt-10 mb-4 text-[#0F1F0F]">
-        Blocked Dates
-      </h2>
+        {/* Calendar */}
+        <button
+          onClick={() => router.push("/admin/calendar")}
+          className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
+        >
+          <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">Manage Calendar</h3>
+          <p className="text-gray-600">Block dates or sync with Airbnb (coming soon).</p>
+        </button>
 
-      <ul className="space-y-2">
-        {blockedDates.map((d, index) => (
-          <li key={index} className="text-[#0F1F0F]">
-            • {format(d, "dd MMM yyyy")}
-          </li>
-        ))}
-      </ul>
+        {/* Pricing */}
+        <button
+          onClick={() => router.push("/admin/pricing")}
+          className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
+        >
+          <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">Pricing</h3>
+          <p className="text-gray-600">Adjust weekday / weekend pricing.</p>
+        </button>
+
+        {/* Bookings */}
+        <button
+          onClick={() => router.push("/admin/bookings")}
+          className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
+        >
+          <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">Confirmed Bookings</h3>
+          <p className="text-gray-600">Track confirmed guests.</p>
+        </button>
+
+        {/* Settings */}
+        <button
+          onClick={() => router.push("/admin/settings")}
+          className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
+        >
+          <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">Settings</h3>
+          <p className="text-gray-600">Website / admin custom settings.</p>
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={() => setAuthed(false)}
+          className="bg-red-600 text-white p-6 rounded shadow hover:shadow-lg transition text-left"
+        >
+          <h3 className="text-xl font-semibold mb-2">Logout</h3>
+          <p>End admin session.</p>
+        </button>
+      </div>
     </main>
   );
 }
