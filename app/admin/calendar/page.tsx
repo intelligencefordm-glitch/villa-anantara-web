@@ -20,29 +20,32 @@ export default function AdminCalendarPage() {
   // -------------------------------
   // LOAD BLOCKED DATES
   // -------------------------------
-  async function loadBlockedDates() {
-    try {
-      setError("");
+  const loadBlocked = async () => {
+  setLoading(true);
+  setError("");
 
-      const res = await fetch("/api/admin/blocked", {
-        headers: {
-          "x-admin-password": password,
-        },
-      });
+  try {
+    const res = await fetch("/api/admin/blocked", {
+      method: "GET",
+      headers: {
+        "x-admin-password": adminPassword, // 👈 IMPORTANT
+      },
+    });
 
-      if (!res.ok) {
-        throw new Error("Failed to load blocked dates");
-      }
+    const json = await res.json();
 
-      const json = await res.json();
-      const arr = (json.blocked || []).map((b: any) => b.date);
-      setBlockedDates(arr);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load blocked dates.");
-    }
+    if (!res.ok) throw new Error(json.error || "Failed");
+
+    setBlockedDates(
+      (json.blocked || []).map((item: any) => new Date(item.date))
+    );
+  } catch (err) {
+    console.error(err);
+    setError("Failed to load blocked dates.");
+  } finally {
+    setLoading(false);
   }
-
+};
   // -------------------------------
   // LOGIN
   // -------------------------------
