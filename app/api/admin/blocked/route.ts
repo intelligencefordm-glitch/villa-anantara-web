@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -29,15 +31,13 @@ export async function GET(req: Request) {
       );
     }
 
-    const blocked: string[] =
-      (data || [])
-        .map((row: any) => {
-          if (!row.date) return null;
-          const d = new Date(row.date);
-          if (Number.isNaN(d.getTime())) return null;
-          return d.toISOString().slice(0, 10); // yyyy-MM-dd
-        })
-        .filter(Boolean) as string[];
+    const blocked = (data || [])
+      .map((row: any) => {
+        const d = new Date(row.date);
+        if (isNaN(d.getTime())) return null;
+        return d.toISOString().slice(0, 10);
+      })
+      .filter(Boolean);
 
     return NextResponse.json({ blocked }, { status: 200 });
   } catch (err: any) {
