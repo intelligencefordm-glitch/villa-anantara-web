@@ -8,8 +8,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const pass = req.headers.get("x-admin-password") || "";
+    const adminPass = process.env.ADMIN_PASSWORD;
+
+    if (!adminPass || pass !== adminPass) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data, error } = await supabase
       .from("blocked_dates")
       .select("date");
@@ -26,10 +33,9 @@ export async function GET() {
       (data || [])
         .map((row: any) => {
           if (!row.date) return null;
-          // accept date or string
           const d = new Date(row.date);
           if (Number.isNaN(d.getTime())) return null;
-          return d.toISOString().slice(0, 10); // "yyyy-MM-dd"
+          return d.toISOString().slice(0, 10); // yyyy-MM-dd
         })
         .filter(Boolean) as string[];
 
