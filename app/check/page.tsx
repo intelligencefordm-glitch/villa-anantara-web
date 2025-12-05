@@ -11,18 +11,14 @@ import {
   parseISO,
 } from "date-fns";
 
-type BlockedPublicResponse = {
-  blocked: string[];
-};
-
 export default function CheckAvailabilityPage() {
-  const MOCHA = "#C29F0F";
+  const MOCHA = "#C29F80"; // Updated color stays here
   const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
-  const [disabledDatesSet, setDisabledDatesSet] = useState<Set<string>>(
-    new Set()
-  );
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
+  const [disabledDatesSet, setDisabledDatesSet] = useState<Set<string>>(new Set());
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,17 +35,33 @@ export default function CheckAvailabilityPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // ------------------------------------
-  // FETCH PUBLIC BLOCKED DATES
-  // ------------------------------------
+  // FETCH BOOKINGS + BLOCKED DATES
   useEffect(() => {
     const loadData = async () => {
       try {
-        const res = await fetch("/api/admin/blocked-public");
-        const json: BlockedPublicResponse = await res.json();
+        const bRes = await fetch("/api/inquiries/list");
+        const bJson = await bRes.json();
+
+        const blkRes = await fetch("/api/admin/blocked-public");
+        const blkJson = await blkRes.json();
+
+        setBookings(bJson.inquiries || []);
+        setBlockedDates(blkJson.blocked || []);
 
         const set = new Set<string>();
-        (json.blocked || []).forEach((d) => set.add(d));
+
+        // Booked dates
+        (bJson.inquiries || []).forEach((inq: any) => {
+          if (inq.check_in && inq.check_out) {
+            const start = parseISO(inq.check_in);
+            const end = parseISO(inq.check_out);
+            const days = eachDayOfInterval({ start, end: addDays(end, -1) });
+            days.forEach((d) => set.add(format(d, "yyyy-MM-dd")));
+          }
+        });
+
+        // Admin-blocked dates
+        (blkJson.blocked || []).forEach((d: string) => set.add(d));
 
         setDisabledDatesSet(set);
       } catch (err) {
@@ -60,9 +72,7 @@ export default function CheckAvailabilityPage() {
     loadData();
   }, []);
 
-  // ------------------------------------
-  // CHECK IF RANGE OVERLAPS DISABLED
-  // ------------------------------------
+  // CHECK OVERLAPPING
   const selectionIntersectsDisabled = (sel: DateRange | undefined) => {
     if (!sel?.from || !sel?.to) return false;
 
@@ -77,9 +87,7 @@ export default function CheckAvailabilityPage() {
     return false;
   };
 
-  // ------------------------------------
-  // DAY PICKER SELECT
-  // ------------------------------------
+  // SELECTION HANDLER
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -100,10 +108,7 @@ export default function CheckAvailabilityPage() {
 
     setRange(val);
 
-    setTimeout(
-      () => formRef.current?.scrollIntoView({ behavior: "smooth" }),
-      150
-    );
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
   };
 
   const disabledPicker = (date: Date) => {
@@ -112,21 +117,16 @@ export default function CheckAvailabilityPage() {
     return disabledDatesSet.has(key);
   };
 
-  // ------------------------------------
-  // SUBMIT
-  // ------------------------------------
+  // SUBMIT FORM
   const handleSubmit = async () => {
-    setErrorMsg(null);
-    setSuccessMsg(null);
-
     if (!range?.from || !range?.to)
-      return setErrorMsg("Please select your check-in and check-out dates.");
-
-    if (!name.trim()) return setErrorMsg("Please enter your full name.");
-    if (!phone.trim()) return setErrorMsg("Please enter your phone number.");
+      return setErrorMsg("Please select dates first.");
 
     if (selectionIntersectsDisabled(range))
-      return setErrorMsg("Sorry — those dates are not available.");
+      return setErrorMsg("These dates are not available.");
+
+    if (!name || !phone)
+      return setErrorMsg("Please fill all required fields.");
 
     const payload = {
       name,
@@ -149,43 +149,21 @@ export default function CheckAvailabilityPage() {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to save");
+      if (!res.ok) throw new Error(json.error);
 
       setSuccessMsg("Inquiry saved. Opening WhatsApp...");
 
-      // Block selected dates instantly
-      const days = eachDayOfInterval({
-        start: parseISO(payload.check_in),
-        end: addDays(parseISO(payload.check_out), -1),
-      });
-
-      const next = new Set(disabledDatesSet);
-      days.forEach((d) => next.add(format(d, "yyyy-MM-dd")));
-      setDisabledDatesSet(next);
-
-      // ------------------------------------
-      // FIXED WHATSAPP MESSAGE
-      // ------------------------------------
-      const whatsappMessage = encodeURIComponent(
-        `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-          `Name: ${name}\n` +
-          `Phone: ${phone}\n` +
-          `Guests: ${guests}\n` +
-          `Occasion: ${occasion}\n` +
-          `Check-in: ${payload.check_in}\n` +
-          `Check-out: ${payload.check_out}\n` +
-          `Nights: ${payload.nights}`
-      );
-
       setTimeout(() => {
-        window.open(
-          `https://wa.me/918889777288?text=${whatsappMessage}`,
-          "_blank"
+        const message = encodeURIComponent(
+          `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
+            `Name: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\n` +
+            `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
         );
 
-        // Clear selected range AFTER message is built
-        setRange(undefined);
-      }, 700);
+        // FIXED FOR ALL PHONES
+        window.location.href =
+          `https://api.whatsapp.com/send?phone=918889777288&text=${message}`;
+      }, 800);
     } catch (err) {
       console.error(err);
       setErrorMsg("Failed to save inquiry. Please try again.");
@@ -194,19 +172,9 @@ export default function CheckAvailabilityPage() {
     }
   };
 
-  // ------------------------------------
-  // RENDER
-  // ------------------------------------
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
-      <h1 className="text-3xl font-bold mb-2" style={{ color: DARK }}>
-        Check Availability
-      </h1>
-
-      <p className="mb-4 text-sm" style={{ color: DARK }}>
-        Select your check-in and check-out dates to see if Villa Anantara is
-        available.
-      </p>
+      <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
 
       <DayPicker
         mode="range"
@@ -223,67 +191,56 @@ export default function CheckAvailabilityPage() {
       />
 
       {errorMsg && (
-        <div className="mt-4 p-3 bg-red-200 text-red-700 rounded">{errorMsg}</div>
-      )}
-
-      {successMsg && (
-        <div className="mt-4 p-3 bg-green-200 text-green-700 rounded">
-          {successMsg}
+        <div className="mt-4 p-3 bg-red-200 text-red-700 rounded">
+          {errorMsg}
         </div>
       )}
 
+      {/* GUEST DETAILS CARD — MOCHA COLOR UPDATED */}
       {range?.from && range?.to && !selectionIntersectsDisabled(range) && (
         <div
           ref={formRef}
-          className="mt-6 p-6 rounded-lg shadow-md"
-          style={{ background: MOCHA }}
+          className="mt-6 p-6 rounded"
+          style={{ background: MOCHA }} // ← UPDATED COLOR APPLIED HERE
         >
-          <h2 className="text-xl text-white font-semibold mb-4">
-            Guest Details
-          </h2>
+          <h2 className="text-xl text-white font-semibold mb-4">Guest Details</h2>
 
-          {/* Full Name */}
-          <label className="block text-white text-sm mb-1">Full name</label>
           <input
             className="w-full p-3 mb-3 rounded"
-            placeholder="Enter your full name"
+            placeholder="Full name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
-          {/* Phone */}
-          <label className="block text-white text-sm mb-1">Phone</label>
           <input
             className="w-full p-3 mb-3 rounded"
-            placeholder="WhatsApp / phone number"
+            placeholder="Phone"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
 
-          {/* Email */}
-          <label className="block text-white text-sm mb-1">
-            Email (optional)
-          </label>
           <input
             className="w-full p-3 mb-3 rounded"
-            placeholder="Email address"
+            placeholder="Email (optional)"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           {/* Guests */}
-          <label className="block text-white text-sm mb-1">Guests</label>
-          <input
-            type="number"
-            min={1}
-            max={30}
+          <select
             className="w-full p-3 mb-3 rounded"
             value={guests}
-            onChange={(e) => setGuests(Number(e.target.value || 0))}
-          />
+            onChange={(e) => setGuests(Number(e.target.value))}
+          >
+            <option value={2}>2 Guests</option>
+            <option value={3}>3 Guests</option>
+            <option value={4}>4 Guests</option>
+            <option value={5}>5 Guests</option>
+            <option value={10}>10 Guests</option>
+            <option value={15}>15 Guests</option>
+          </select>
 
           {/* Occasion */}
-          <label className="block text-white text-sm mb-1">Occasion</label>
           <select
             className="w-full p-3 mb-3 rounded"
             value={occasion}
@@ -295,8 +252,7 @@ export default function CheckAvailabilityPage() {
 
           <button
             onClick={handleSubmit}
-            disabled={saving}
-            className="w-full p-3 mt-4 bg-black text-white rounded font-medium disabled:opacity-70"
+            className="w-full p-3 mt-4 bg-black text-white rounded"
           >
             {saving ? "Saving..." : "Confirm & Send on WhatsApp"}
           </button>
