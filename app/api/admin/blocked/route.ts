@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { addDays, eachDayOfInterval, format } from "date-fns";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -11,52 +10,34 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 export async function GET() {
   try {
-    // 1) Admin-blocked single dates (NO GENERICS)
-    const { data: blockedRows, error: blockedError } = await supabase
+    const { data, error } = await supabase
       .from("blocked_dates")
       .select("date");
 
-    if (blockedError) throw blockedError;
+    if (error) {
+      console.error("BLOCKED GET error:", error);
+      return NextResponse.json(
+        { error: error.message, blocked: [] },
+        { status: 500 }
+      );
+    }
 
-    // 2) Inquiries / bookings (NO GENERICS)
-    const { data: inquiries, error: inquiriesError } = await supabase
-      .from("inquiries")
-      .select("check_in, check_out");
+    const blocked: string[] =
+      (data || [])
+        .map((row: any) => {
+          if (!row.date) return null;
+          // accept date or string
+          const d = new Date(row.date);
+          if (Number.isNaN(d.getTime())) return null;
+          return d.toISOString().slice(0, 10); // "yyyy-MM-dd"
+        })
+        .filter(Boolean) as string[];
 
-    if (inquiriesError) throw inquiriesError;
-
-    const blockedSet = new Set<string>();
-
-    // A) Single-day blocks
-    (blockedRows || []).forEach((row: any) => {
-      if (!row.date) return;
-      const d = new Date(row.date);
-      blockedSet.add(format(d, "yyyy-MM-dd"));
-    });
-
-    // B) Blocked ranges from inquiries
-    (inquiries || []).forEach((inq: any) => {
-      if (!inq.check_in || !inq.check_out) return;
-
-      const start = new Date(inq.check_in);
-      const end = new Date(inq.check_out);
-
-      const days = eachDayOfInterval({
-        start,
-        end: addDays(end, -1), // last night
-      });
-
-      days.forEach((d) => blockedSet.add(format(d, "yyyy-MM-dd")));
-    });
-
+    return NextResponse.json({ blocked }, { status: 200 });
+  } catch (err: any) {
+    console.error("BLOCKED route fatal error:", err);
     return NextResponse.json(
-      { blocked: Array.from(blockedSet) },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("blocked-public GET error", error);
-    return NextResponse.json(
-      { error: "Failed to load blocked dates" },
+      { error: "Failed to load blocked dates", blocked: [] },
       { status: 500 }
     );
   }
