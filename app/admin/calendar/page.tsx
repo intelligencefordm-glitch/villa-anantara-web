@@ -237,31 +237,23 @@ export default function AdminCalendarPage() {
 
           {/* CALENDAR */}
           <DayPicker
-            mode="single"
-            onDayClick={handleDayClick}
+            mode="multiple"
             selected={selectedDates.map((d) => new Date(d))}
-            modifiers={{}}
-            styles={{
-              day: (day) => {
-                const iso = format(day, "yyyy-MM-dd");
-
-                if (blockedDates.includes(iso)) {
-                  return {
-                    backgroundColor: red,
-                    color: "white",
-                    borderRadius: "50%",
-                  };
-                }
-
-                if (selectedDates.includes(iso)) {
-                  return {
-                    backgroundColor: "#0F1F0F",
-                    color: "white",
-                    borderRadius: "50%",
-                  };
-                }
-
-                return {};
+            onDayClick={handleDayClick}
+            modifiers={{
+              blocked: blockedDates.map((d) => new Date(d)),
+              selectedDay: selectedDates.map((d) => new Date(d)),
+            }}
+            modifiersStyles={{
+              blocked: {
+                backgroundColor: red,
+                color: "white",
+                borderRadius: "50%",
+              },
+              selectedDay: {
+                backgroundColor: "#0F1F0F",
+                color: "white",
+                borderRadius: "50%",
               },
             }}
           />
