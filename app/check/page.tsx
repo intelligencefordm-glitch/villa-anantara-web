@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 
 export default function CheckAvailabilityPage() {
-  const MOCHA = "#C29F80"; // Updated color stays here
+  const MOCHA = "#C29F80";
   const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
@@ -23,7 +23,7 @@ export default function CheckAvailabilityPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [guests, setGuests] = useState(2);
+  const [guests, setGuests] = useState<number | "">("");
   const [occasion, setOccasion] = useState("Stay");
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -35,7 +35,9 @@ export default function CheckAvailabilityPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // ------------------------------------
   // FETCH BOOKINGS + BLOCKED DATES
+  // ------------------------------------
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -50,7 +52,7 @@ export default function CheckAvailabilityPage() {
 
         const set = new Set<string>();
 
-        // Booked dates
+        // Booked dates from inquiries
         (bJson.inquiries || []).forEach((inq: any) => {
           if (inq.check_in && inq.check_out) {
             const start = parseISO(inq.check_in);
@@ -72,7 +74,9 @@ export default function CheckAvailabilityPage() {
     loadData();
   }, []);
 
+  // ------------------------------------
   // CHECK OVERLAPPING
+  // ------------------------------------
   const selectionIntersectsDisabled = (sel: DateRange | undefined) => {
     if (!sel?.from || !sel?.to) return false;
 
@@ -82,12 +86,16 @@ export default function CheckAvailabilityPage() {
     });
 
     for (const d of days) {
-      if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) return true;
+      if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) {
+        return true;
+      }
     }
     return false;
   };
 
-  // SELECTION HANDLER
+  // ------------------------------------
+  // DAY SELECTION HANDLER
+  // ------------------------------------
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -117,7 +125,18 @@ export default function CheckAvailabilityPage() {
     return disabledDatesSet.has(key);
   };
 
-  // SUBMIT FORM
+  // ------------------------------------
+  // RESET DATES
+  // ------------------------------------
+  const handleResetDates = () => {
+    setRange(undefined);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+  };
+
+  // ------------------------------------
+  // SUBMIT INQUIRY
+  // ------------------------------------
   const handleSubmit = async () => {
     if (!range?.from || !range?.to)
       return setErrorMsg("Please select dates first.");
@@ -128,11 +147,17 @@ export default function CheckAvailabilityPage() {
     if (!name || !phone)
       return setErrorMsg("Please fill all required fields.");
 
+    if (guests === "" || Number.isNaN(Number(guests))) {
+      return setErrorMsg("Please enter number of guests.");
+    }
+
+    const guestsNum = Number(guests);
+
     const payload = {
       name,
       phone,
       email,
-      guests,
+      guests: guestsNum,
       occasion,
       check_in: format(range.from, "yyyy-MM-dd"),
       check_out: format(range.to, "yyyy-MM-dd"),
@@ -142,6 +167,7 @@ export default function CheckAvailabilityPage() {
     try {
       setSaving(true);
 
+      // Save to Supabase
       const res = await fetch("/api/inquiries/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -156,11 +182,10 @@ export default function CheckAvailabilityPage() {
       setTimeout(() => {
         const message = encodeURIComponent(
           `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-            `Name: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\n` +
+            `Name: ${name}\nPhone: ${phone}\nGuests: ${guestsNum}\nOccasion: ${occasion}\n` +
             `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
         );
 
-        // FIXED FOR ALL PHONES
         window.location.href =
           `https://api.whatsapp.com/send?phone=918889777288&text=${message}`;
       }, 800);
@@ -172,10 +197,13 @@ export default function CheckAvailabilityPage() {
     }
   };
 
+  // ------------------------------------
+
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
 
+      {/* CALENDAR */}
       <DayPicker
         mode="range"
         selected={range}
@@ -190,18 +218,27 @@ export default function CheckAvailabilityPage() {
         }}
       />
 
+      {/* RESET DATES BUTTON */}
+      <button
+        onClick={handleResetDates}
+        className="mt-3 mb-2 px-4 py-2 rounded border border-[#0F1F0F]/40 text-sm"
+      >
+        Reset dates
+      </button>
+
+      {/* Errors */}
       {errorMsg && (
-        <div className="mt-4 p-3 bg-red-200 text-red-700 rounded">
+        <div className="mt-2 p-3 bg-red-200 text-red-700 rounded">
           {errorMsg}
         </div>
       )}
 
-      {/* GUEST DETAILS CARD — MOCHA COLOR UPDATED */}
+      {/* GUEST FORM */}
       {range?.from && range?.to && !selectionIntersectsDisabled(range) && (
         <div
           ref={formRef}
           className="mt-6 p-6 rounded"
-          style={{ background: MOCHA }} // ← UPDATED COLOR APPLIED HERE
+          style={{ background: MOCHA }}
         >
           <h2 className="text-xl text-white font-semibold mb-4">Guest Details</h2>
 
@@ -226,19 +263,20 @@ export default function CheckAvailabilityPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          {/* Guests */}
-          <select
+          {/* Guests – typed number */}
+          <input
+            type="number"
+            min={1}
+            max={15}
             className="w-full p-3 mb-3 rounded"
+            placeholder="Guests"
             value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
-          >
-            <option value={2}>2 Guests</option>
-            <option value={3}>3 Guests</option>
-            <option value={4}>4 Guests</option>
-            <option value={5}>5 Guests</option>
-            <option value={10}>10 Guests</option>
-            <option value={15}>15 Guests</option>
-          </select>
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "") setGuests("");
+              else setGuests(Number(v));
+            }}
+          />
 
           {/* Occasion */}
           <select
