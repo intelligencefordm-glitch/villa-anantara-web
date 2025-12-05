@@ -25,7 +25,6 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Insert all selected dates
     const rows = dates.map((d) => ({ date: d }));
 
     const { error } = await supabase.from("blocked_dates").insert(rows);
