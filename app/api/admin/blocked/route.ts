@@ -1,64 +1,82 @@
-// app/api/admin/blocked/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { addDays, eachDayOfInterval, format } from "date-fns";
 
-export async function GET(req: Request) {
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+});
+
+type BlockedDateRow = {
+  date: string | null;
+};
+
+type InquiryRow = {
+  check_in: string | null;
+  check_out: string | null;
+  // status?: string | null; // add & filter if you only want confirmed bookings
+};
+
+export async function GET() {
   try {
-    const pass = req.headers.get("x-admin-password") || "";
-    const adminPass = process.env.ADMIN_PASSWORD;
+    // 1) Admin-blocked single dates
+    const { data: blockedRows, error: blockedError } = await supabase
+      .from<BlockedDateRow>("blocked_dates")
+      .select("date");
 
-    // ------------------------------
-    // 1) Admin password validation
-    // ------------------------------
-    if (!adminPass) {
-      console.error("❌ ADMIN_PASSWORD is missing in environment");
-      return NextResponse.json(
-        { error: "Server misconfiguration: ADMIN_PASSWORD missing." },
-        { status: 500 }
-      );
+    if (blockedError) {
+      console.error("blocked_dates error", blockedError);
+      throw blockedError;
     }
 
-    if (pass !== adminPass) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 2) Booked ranges (inquiries / bookings)
+    const { data: inquiries, error: inquiriesError } = await supabase
+      .from<InquiryRow>("inquiries")
+      .select("check_in, check_out");
+
+    if (inquiriesError) {
+      console.error("inquiries error", inquiriesError);
+      throw inquiriesError;
     }
 
-    // ------------------------------
-    // 2) Supabase env validation
-    // ------------------------------
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const blockedSet = new Set<string>();
 
-    if (!url || !serviceRole) {
-      console.error("❌ Missing Supabase env config", { url, serviceRole });
-      return NextResponse.json(
-        { error: "Supabase configuration missing." },
-        { status: 500 }
-      );
-    }
+    // A) Single blocked days
+    (blockedRows || []).forEach((row) => {
+      if (!row.date) return;
+      // assume row.date is already yyyy-MM-dd or ISO
+      const d = new Date(row.date);
+      blockedSet.add(format(d, "yyyy-MM-dd"));
+    });
 
-    // ------------------------------
-    // 3) Create server supabase client
-    // ------------------------------
-    const supabase = createClient(url, serviceRole);
+    // B) Blocked ranges from inquiries
+    (inquiries || []).forEach((inq) => {
+      if (!inq.check_in || !inq.check_out) return;
 
-    const { data, error } = await supabase
-      .from("blocked_dates")
-      .select("*")
-      .order("date", { ascending: true });
+      const start = new Date(inq.check_in);
+      const end = new Date(inq.check_out);
 
-    if (error) {
-      console.error("❌ Supabase error:", error);
-      return NextResponse.json(
-        { error: "Database error: " + error.message },
-        { status: 500 }
-      );
-    }
+      // block every night from check_in to (check_out - 1)
+      const days = eachDayOfInterval({
+        start,
+        end: addDays(end, -1),
+      });
 
-    return NextResponse.json({ blocked: data || [] });
-  } catch (err: any) {
-    console.error("❌ Route crashed:", err);
+      days.forEach((d) => {
+        blockedSet.add(format(d, "yyyy-MM-dd"));
+      });
+    });
+
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { blocked: Array.from(blockedSet) },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("blocked-public GET error", error);
+    return NextResponse.json(
+      { error: "Failed to load blocked dates" },
       { status: 500 }
     );
   }
