@@ -17,8 +17,16 @@ export async function POST(req: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    for (const d of dates) {
-      await supabase.from("blocked_dates").upsert({ date: d });
+    // Insert all dates at once
+    const rows = dates.map((d: string) => ({ date: d }));
+
+    const { error } = await supabase
+      .from("blocked_dates")
+      .upsert(rows, { onConflict: "date" });
+
+    if (error) {
+      console.error(error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
