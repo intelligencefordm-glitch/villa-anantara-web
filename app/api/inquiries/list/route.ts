@@ -1,28 +1,37 @@
+// app/api/inquiries/list/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! // MUST be service role inside server
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Fetch all inquiries
     const { data, error } = await supabase
       .from("inquiries")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Supabase error:", error);
-      return NextResponse.json({ inquiries: [] });
+      console.error("inquiries/list error:", error);
+      return NextResponse.json({ error: error.message, inquiries: [] }, { status: 500 });
     }
 
-    // If data is null → return empty array
-    return NextResponse.json({ inquiries: data ?? [] });
+    return NextResponse.json(
+      { inquiries: data || [] },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   } catch (err) {
-    console.error("API crash:", err);
-    return NextResponse.json({ inquiries: [] });
+    console.error("inquiries/list fatal:", err);
+    return NextResponse.json({ error: "Internal error", inquiries: [] }, { status: 500 });
   }
 }
