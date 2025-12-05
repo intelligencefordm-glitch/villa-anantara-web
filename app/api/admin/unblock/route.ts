@@ -10,7 +10,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { dates } = await req.json();
+    const body = await req.json();
+    const dates: string[] = body?.dates || [];
+
+    if (!Array.isArray(dates) || dates.length === 0) {
+      return NextResponse.json(
+        { error: "No dates provided" },
+        { status: 400 }
+      );
+    }
 
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,13 +31,13 @@ export async function POST(req: Request) {
       .in("date", dates);
 
     if (error) {
-      console.error(error);
+      console.error("UNBLOCK delete error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (err: any) {
-    console.error(err);
+    console.error("UNBLOCK route fatal error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
