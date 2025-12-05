@@ -46,13 +46,11 @@ export default function CheckAvailabilityPage() {
     const loadData = async () => {
       try {
         const res = await fetch("/api/admin/blocked-public");
-        if (!res.ok) throw new Error("Failed to load blocked dates");
-
         const json: BlockedPublicResponse = await res.json();
-        const list = json.blocked || [];
 
+        const blocked = json.blocked || [];
         const set = new Set<string>();
-        list.forEach((d) => set.add(d));
+        blocked.forEach((d) => set.add(d));
         setDisabledDatesSet(set);
       } catch (err) {
         console.error("Availability Load Error", err);
@@ -74,9 +72,7 @@ export default function CheckAvailabilityPage() {
     });
 
     for (const d of days) {
-      if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) {
-        return true;
-      }
+      if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) return true;
     }
     return false;
   };
@@ -88,13 +84,11 @@ export default function CheckAvailabilityPage() {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    // still allow single-click start
     if (!val?.from || !val?.to) {
       setRange(val);
       return;
     }
 
-    // at least 1 night
     if (differenceInDays(val.to, val.from) < 1) {
       val = { from: val.from, to: addDays(val.from, 1) };
     }
@@ -106,10 +100,9 @@ export default function CheckAvailabilityPage() {
 
     setRange(val);
 
-    // scroll guest details into view
     setTimeout(
       () => formRef.current?.scrollIntoView({ behavior: "smooth" }),
-      200
+      150
     );
   };
 
@@ -120,7 +113,7 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // SUBMIT
+  // SUBMIT INQUIRY
   // ------------------------------------
   const handleSubmit = async () => {
     setErrorMsg(null);
@@ -129,11 +122,11 @@ export default function CheckAvailabilityPage() {
     if (!range?.from || !range?.to)
       return setErrorMsg("Please select your check-in and check-out dates.");
 
-    if (selectionIntersectsDisabled(range))
-      return setErrorMsg("Sorry — those dates are not available.");
-
     if (!name.trim()) return setErrorMsg("Please enter your full name.");
     if (!phone.trim()) return setErrorMsg("Please enter your phone number.");
+
+    if (selectionIntersectsDisabled(range))
+      return setErrorMsg("Sorry — those dates are not available.");
 
     const payload = {
       name,
@@ -159,7 +152,7 @@ export default function CheckAvailabilityPage() {
 
       setSuccessMsg("Inquiry saved. Opening WhatsApp...");
 
-      // Update UI instantly - mark newly requested dates as blocked
+      // Mark dates instantly as blocked
       const days = eachDayOfInterval({
         start: parseISO(payload.check_in),
         end: addDays(parseISO(payload.check_out), -1),
@@ -169,18 +162,18 @@ export default function CheckAvailabilityPage() {
       days.forEach((d) => next.add(format(d, "yyyy-MM-dd")));
       setDisabledDatesSet(next);
 
+      // OPEN WHATSAPP
       setTimeout(() => {
         const message = encodeURIComponent(
           `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-            `Name: ${name}\n` +
-            `Phone: ${phone}\n` +
-            `Guests: ${guests}\n` +
-            `Occasion: ${occasion}\n` +
-            `Check-in: ${payload.check_in}\n` +
-            `Check-out: ${payload.check_out}\n` +
-            `Nights: ${payload.nights}`
+            `Name: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\n` +
+            `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
         );
+
         window.open(`https://wa.me/918889777288?text=${message}`, "_blank");
+
+        // IMPORTANT FIX: CLEAR RANGE TO PREVENT RED ERROR
+        setRange(undefined);
       }, 700);
     } catch (err) {
       console.error(err);
@@ -190,6 +183,9 @@ export default function CheckAvailabilityPage() {
     }
   };
 
+  // ------------------------------------
+  // RENDER UI
+  // ------------------------------------
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2" style={{ color: DARK }}>
@@ -283,7 +279,6 @@ export default function CheckAvailabilityPage() {
               min={1}
               max={30}
               className="w-full p-3 rounded outline-none"
-              placeholder="Number of guests"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value || 0))}
             />
