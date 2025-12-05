@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import {
@@ -11,14 +11,18 @@ import {
   parseISO,
 } from "date-fns";
 
+type BlockedPublicResponse = {
+  blocked: string[];
+};
+
 export default function CheckAvailabilityPage() {
   const MOCHA = "#C29F80";
   const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
-  const [disabledDatesSet, setDisabledDatesSet] = useState<Set<string>>(new Set());
+  const [disabledDatesSet, setDisabledDatesSet] = useState<Set<string>>(
+    new Set()
+  );
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -36,38 +40,19 @@ export default function CheckAvailabilityPage() {
   today.setHours(0, 0, 0, 0);
 
   // ------------------------------------
-  // 🔥 FETCH BOOKINGS + BLOCKED DATES
+  // FETCH MERGED BLOCKED DATES (PUBLIC)
   // ------------------------------------
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 1. get inquiries
-        const bRes = await fetch("/api/inquiries/list");
-        const bJson = await bRes.json();
+        const res = await fetch("/api/admin/blocked-public");
+        if (!res.ok) throw new Error("Failed to load blocked dates");
 
-        // 2. get admin blocked dates
-        const blkRes = await fetch("/api/blocks/list");
-        const blkJson = await blkRes.json();
+        const json: BlockedPublicResponse = await res.json();
+        const list = json.blocked || [];
 
-        setBookings(bJson.inquiries || []);
-        setBlockedDates(blkJson.blocked || []);
-
-        // BUILD DISABLED DATES SET
         const set = new Set<string>();
-
-        // A) Booked dates (from inquiries)
-        (bJson.inquiries || []).forEach((inq: any) => {
-          if (inq.check_in && inq.check_out) {
-            const start = parseISO(inq.check_in);
-            const end = parseISO(inq.check_out);
-            const days = eachDayOfInterval({ start, end: addDays(end, -1) });
-            days.forEach((d) => set.add(format(d, "yyyy-MM-dd")));
-          }
-        });
-
-        // B) Blocked by admin
-        (blkJson.blocked || []).forEach((d: string) => set.add(d));
-
+        list.forEach((d) => set.add(d));
         setDisabledDatesSet(set);
       } catch (err) {
         console.error("Availability Load Error", err);
@@ -83,7 +68,10 @@ export default function CheckAvailabilityPage() {
   const selectionIntersectsDisabled = (sel: DateRange | undefined) => {
     if (!sel?.from || !sel?.to) return false;
 
-    const days = eachDayOfInterval({ start: sel.from, end: addDays(sel.to, -1) });
+    const days = eachDayOfInterval({
+      start: sel.from,
+      end: addDays(sel.to, -1),
+    });
 
     for (const d of days) {
       if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) {
@@ -94,17 +82,19 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // FIX DAY SELECTION
+  // DAY SELECTION HANDLER
   // ------------------------------------
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
+    // still allow single-click start
     if (!val?.from || !val?.to) {
       setRange(val);
       return;
     }
 
+    // at least 1 night
     if (differenceInDays(val.to, val.from) < 1) {
       val = { from: val.from, to: addDays(val.from, 1) };
     }
@@ -116,7 +106,11 @@ export default function CheckAvailabilityPage() {
 
     setRange(val);
 
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
+    // scroll guest details into view
+    setTimeout(
+      () => formRef.current?.scrollIntoView({ behavior: "smooth" }),
+      200
+    );
   };
 
   const disabledPicker = (date: Date) => {
@@ -129,9 +123,17 @@ export default function CheckAvailabilityPage() {
   // SUBMIT
   // ------------------------------------
   const handleSubmit = async () => {
-    if (!range?.from || !range?.to) return setErrorMsg("Please select dates.");
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    if (!range?.from || !range?.to)
+      return setErrorMsg("Please select your check-in and check-out dates.");
+
     if (selectionIntersectsDisabled(range))
       return setErrorMsg("Sorry — those dates are not available.");
+
+    if (!name.trim()) return setErrorMsg("Please enter your full name.");
+    if (!phone.trim()) return setErrorMsg("Please enter your phone number.");
 
     const payload = {
       name,
@@ -153,11 +155,11 @@ export default function CheckAvailabilityPage() {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok) throw new Error(json.error || "Failed to save");
 
       setSuccessMsg("Inquiry saved. Opening WhatsApp...");
 
-      // Update UI instantly
+      // Update UI instantly - mark newly requested dates as blocked
       const days = eachDayOfInterval({
         start: parseISO(payload.check_in),
         end: addDays(parseISO(payload.check_out), -1),
@@ -170,14 +172,19 @@ export default function CheckAvailabilityPage() {
       setTimeout(() => {
         const message = encodeURIComponent(
           `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-            `Name: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\n` +
-            `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
+            `Name: ${name}\n` +
+            `Phone: ${phone}\n` +
+            `Guests: ${guests}\n` +
+            `Occasion: ${occasion}\n` +
+            `Check-in: ${payload.check_in}\n` +
+            `Check-out: ${payload.check_out}\n` +
+            `Nights: ${payload.nights}`
         );
         window.open(`https://wa.me/918889777288?text=${message}`, "_blank");
       }, 700);
     } catch (err) {
       console.error(err);
-      setErrorMsg("Failed to save inquiry");
+      setErrorMsg("Failed to save inquiry. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -185,7 +192,13 @@ export default function CheckAvailabilityPage() {
 
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
-      <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
+      <h1 className="text-3xl font-bold mb-2" style={{ color: DARK }}>
+        Check Availability
+      </h1>
+      <p className="mb-4 text-sm" style={{ color: DARK }}>
+        Select your check-in and check-out dates to see if Villa Anantara is
+        available.
+      </p>
 
       <DayPicker
         mode="range"
@@ -205,21 +218,101 @@ export default function CheckAvailabilityPage() {
         <div className="mt-4 p-3 bg-red-200 text-red-700 rounded">{errorMsg}</div>
       )}
 
+      {successMsg && (
+        <div className="mt-4 p-3 bg-green-200 text-green-700 rounded">
+          {successMsg}
+        </div>
+      )}
+
       {range?.from && range?.to && !selectionIntersectsDisabled(range) && (
-        <div ref={formRef} className="mt-6 p-6 rounded" style={{ background: MOCHA }}>
-          <h2 className="text-xl text-white font-semibold mb-4">Guest Details</h2>
+        <div
+          ref={formRef}
+          className="mt-6 p-6 rounded-lg shadow-md"
+          style={{ background: MOCHA }}
+        >
+          <h2 className="text-xl text-white font-semibold mb-4">
+            Guest Details
+          </h2>
 
-          <input className="w-full p-3 mb-3 rounded" placeholder="Full name"
-            value={name} onChange={(e) => setName(e.target.value)} />
+          {/* Full Name */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-white mb-1">
+              Full name
+            </label>
+            <input
+              className="w-full p-3 rounded outline-none"
+              placeholder="Enter your full name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
 
-          <input className="w-full p-3 mb-3 rounded" placeholder="Phone"
-            value={phone} onChange={(e) => setPhone(e.target.value)} />
+          {/* Phone */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-white mb-1">
+              Phone
+            </label>
+            <input
+              className="w-full p-3 rounded outline-none"
+              placeholder="Your WhatsApp / phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
 
-          <input className="w-full p-3 mb-3 rounded" placeholder="Email (optional)"
-            value={email} onChange={(e) => setEmail(e.target.value)} />
+          {/* Email */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-white mb-1">
+              Email (optional)
+            </label>
+            <input
+              className="w-full p-3 rounded outline-none"
+              placeholder="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
 
-          <button onClick={handleSubmit}
-            className="w-full p-3 mt-4 bg-black text-white rounded">
+          {/* Guests */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-white mb-1">
+              Guests
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={30}
+              className="w-full p-3 rounded outline-none"
+              placeholder="Number of guests"
+              value={guests}
+              onChange={(e) => setGuests(Number(e.target.value || 0))}
+            />
+          </div>
+
+          {/* Occasion */}
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-white mb-1">
+              Occasion
+            </label>
+            <select
+              className="w-full p-3 rounded outline-none"
+              value={occasion}
+              onChange={(e) => setOccasion(e.target.value)}
+            >
+              <option value="Stay">Stay / Vacation</option>
+              <option value="Birthday">Birthday</option>
+              <option value="Anniversary">Anniversary</option>
+              <option value="Wedding">Wedding / Pre-wedding</option>
+              <option value="Workcation">Workcation / Offsite</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={saving}
+            className="w-full p-3 mt-4 bg-black text-white rounded font-medium disabled:opacity-70"
+          >
             {saving ? "Saving..." : "Confirm & Send on WhatsApp"}
           </button>
         </div>
