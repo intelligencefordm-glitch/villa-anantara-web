@@ -1,14 +1,13 @@
+// app/api/inquiries/add/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
-);
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
     const {
       name,
       phone,
@@ -18,9 +17,8 @@ export async function POST(req: Request) {
       check_in,
       check_out,
       nights,
-    } = body;
+    } = body || {};
 
-    // Validation
     if (!name || !phone || !check_in || !check_out) {
       return NextResponse.json(
         { error: "Missing required fields" },
@@ -28,32 +26,36 @@ export async function POST(req: Request) {
       );
     }
 
-    // Insert into Supabase
-    const { error } = await supabase.from("inquiries").insert([
-      {
-        name,
-        phone,
-        email,
-        guests,
-        occassion: occasion,  // NEW COLUMN
-        check_in,
-        check_out,
-        nights,
-        payment_status: "Pending", // NEW COLUMN
-      },
-    ]);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data, error } = await supabase
+      .from("inquiries")
+      .insert([
+        {
+          name,
+          phone,
+          email,
+          guests,
+          occasion,
+          check_in,
+          check_out,
+          nights,
+        },
+      ])
+      .select()
+      .single();
 
     if (error) {
-      console.error("Error inserting:", error);
+      console.error("inquiries/add error:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ inquiry: data }, { status: 200 });
   } catch (err) {
-    console.error(err);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    console.error("inquiries/add fatal:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
