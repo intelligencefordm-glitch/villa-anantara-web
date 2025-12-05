@@ -16,7 +16,7 @@ type BlockedPublicResponse = {
 };
 
 export default function CheckAvailabilityPage() {
-  const MOCHA = "#C29F80";
+  const MOCHA = "#C29F0F";
   const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
@@ -40,7 +40,7 @@ export default function CheckAvailabilityPage() {
   today.setHours(0, 0, 0, 0);
 
   // ------------------------------------
-  // FETCH MERGED BLOCKED DATES (PUBLIC)
+  // FETCH PUBLIC BLOCKED DATES
   // ------------------------------------
   useEffect(() => {
     const loadData = async () => {
@@ -48,9 +48,9 @@ export default function CheckAvailabilityPage() {
         const res = await fetch("/api/admin/blocked-public");
         const json: BlockedPublicResponse = await res.json();
 
-        const blocked = json.blocked || [];
         const set = new Set<string>();
-        blocked.forEach((d) => set.add(d));
+        (json.blocked || []).forEach((d) => set.add(d));
+
         setDisabledDatesSet(set);
       } catch (err) {
         console.error("Availability Load Error", err);
@@ -78,7 +78,7 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // DAY SELECTION HANDLER
+  // DAY PICKER SELECT
   // ------------------------------------
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
@@ -113,7 +113,7 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // SUBMIT INQUIRY
+  // SUBMIT
   // ------------------------------------
   const handleSubmit = async () => {
     setErrorMsg(null);
@@ -141,6 +141,7 @@ export default function CheckAvailabilityPage() {
 
     try {
       setSaving(true);
+
       const res = await fetch("/api/inquiries/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -152,7 +153,7 @@ export default function CheckAvailabilityPage() {
 
       setSuccessMsg("Inquiry saved. Opening WhatsApp...");
 
-      // Mark dates instantly as blocked
+      // Block selected dates instantly
       const days = eachDayOfInterval({
         start: parseISO(payload.check_in),
         end: addDays(parseISO(payload.check_out), -1),
@@ -162,17 +163,27 @@ export default function CheckAvailabilityPage() {
       days.forEach((d) => next.add(format(d, "yyyy-MM-dd")));
       setDisabledDatesSet(next);
 
-      // OPEN WHATSAPP
+      // ------------------------------------
+      // FIXED WHATSAPP MESSAGE
+      // ------------------------------------
+      const whatsappMessage = encodeURIComponent(
+        `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
+          `Name: ${name}\n` +
+          `Phone: ${phone}\n` +
+          `Guests: ${guests}\n` +
+          `Occasion: ${occasion}\n` +
+          `Check-in: ${payload.check_in}\n` +
+          `Check-out: ${payload.check_out}\n` +
+          `Nights: ${payload.nights}`
+      );
+
       setTimeout(() => {
-        const message = encodeURIComponent(
-          `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-            `Name: ${name}\nPhone: ${phone}\nGuests: ${guests}\nOccasion: ${occasion}\n` +
-            `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
+        window.open(
+          `https://wa.me/918889777288?text=${whatsappMessage}`,
+          "_blank"
         );
 
-        window.open(`https://wa.me/918889777288?text=${message}`, "_blank");
-
-        // IMPORTANT FIX: CLEAR RANGE TO PREVENT RED ERROR
+        // Clear selected range AFTER message is built
         setRange(undefined);
       }, 700);
     } catch (err) {
@@ -184,13 +195,14 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // RENDER UI
+  // RENDER
   // ------------------------------------
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2" style={{ color: DARK }}>
         Check Availability
       </h1>
+
       <p className="mb-4 text-sm" style={{ color: DARK }}>
         Select your check-in and check-out dates to see if Villa Anantara is
         available.
@@ -231,77 +243,55 @@ export default function CheckAvailabilityPage() {
           </h2>
 
           {/* Full Name */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-white mb-1">
-              Full name
-            </label>
-            <input
-              className="w-full p-3 rounded outline-none"
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+          <label className="block text-white text-sm mb-1">Full name</label>
+          <input
+            className="w-full p-3 mb-3 rounded"
+            placeholder="Enter your full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
 
           {/* Phone */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-white mb-1">
-              Phone
-            </label>
-            <input
-              className="w-full p-3 rounded outline-none"
-              placeholder="Your WhatsApp / phone number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+          <label className="block text-white text-sm mb-1">Phone</label>
+          <input
+            className="w-full p-3 mb-3 rounded"
+            placeholder="WhatsApp / phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
           {/* Email */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-white mb-1">
-              Email (optional)
-            </label>
-            <input
-              className="w-full p-3 rounded outline-none"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
+          <label className="block text-white text-sm mb-1">
+            Email (optional)
+          </label>
+          <input
+            className="w-full p-3 mb-3 rounded"
+            placeholder="Email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
           {/* Guests */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-white mb-1">
-              Guests
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={30}
-              className="w-full p-3 rounded outline-none"
-              value={guests}
-              onChange={(e) => setGuests(Number(e.target.value || 0))}
-            />
-          </div>
+          <label className="block text-white text-sm mb-1">Guests</label>
+          <input
+            type="number"
+            min={1}
+            max={30}
+            className="w-full p-3 mb-3 rounded"
+            value={guests}
+            onChange={(e) => setGuests(Number(e.target.value || 0))}
+          />
 
           {/* Occasion */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-white mb-1">
-              Occasion
-            </label>
-            <select
-              className="w-full p-3 rounded outline-none"
-              value={occasion}
-              onChange={(e) => setOccasion(e.target.value)}
-            >
-              <option value="Stay">Stay / Vacation</option>
-              <option value="Birthday">Birthday</option>
-              <option value="Anniversary">Anniversary</option>
-              <option value="Wedding">Wedding / Pre-wedding</option>
-              <option value="Workcation">Workcation / Offsite</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
+          <label className="block text-white text-sm mb-1">Occasion</label>
+          <select
+            className="w-full p-3 mb-3 rounded"
+            value={occasion}
+            onChange={(e) => setOccasion(e.target.value)}
+          >
+            <option value="Stay">Stay</option>
+            <option value="Other">Other</option>
+          </select>
 
           <button
             onClick={handleSubmit}
