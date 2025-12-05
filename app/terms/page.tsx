@@ -8,11 +8,29 @@ export default function TermsPage() {
 
       <div className="space-y-8 text-[#333] leading-relaxed font-poppins">
 
+        {/* 🔥 NEW RULE ADDED ON TOP (AS REQUESTED) */}
+        <section>
+          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+            <b>0. Strict Prohibition: Hukkah / Shisha</b>
+          </h2>
+          <ul className="list-disc ml-6 space-y-2">
+            <li>
+              <b>Hukkah/Shisha is strictly NOT allowed anywhere on the property</b> — this includes inside the villa, poolside, terrace, lawn/farm area, and all outdoor spaces.
+            </li>
+            <li>Violation of this rule will lead to immediate cancellation of stay without refund.</li>
+          </ul>
+        </section>
+
+        {/* ORIGINAL SECTIONS BELOW — ONLY ONE LINE EDITED (50% ADVANCE) */}
+
         <section>
           <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">1. Booking & Payment Policy</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>The villa can accommodate up to 15 guests.</li>
-            <li>20% advance payment is required to confirm the booking.</li>
+
+            {/* UPDATED FROM 20% → 50% */}
+            <li>50% advance payment is required to confirm the booking.</li>
+
             <li>The remaining amount must be paid in full before check-in.</li>
             <li>Cash, UPI, bank transfer, and digital payment modes are accepted.</li>
           </ul>
