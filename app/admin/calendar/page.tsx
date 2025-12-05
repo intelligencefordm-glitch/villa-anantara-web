@@ -1,4 +1,3 @@
-// app/admin/calendar/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,13 +6,13 @@ import "react-day-picker/dist/style.css";
 import { format } from "date-fns";
 
 export default function AdminCalendarPage() {
-  // auth
+  // AUTH
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState(""); // saved after successful login
+  const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
 
-  // data + UI state
-  const [blockedDates, setBlockedDates] = useState<string[]>([]); // ISO strings "YYYY-MM-DD"
+  // DATA
+  const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,19 +20,17 @@ export default function AdminCalendarPage() {
   const mocha = "#C29F80";
   const red = "#B00020";
 
-  // -------------------------------
-  // HELPER — Load blocked dates (API returns: string[])
-  // -------------------------------
+  // ------------------------------------
+  // LOAD BLOCKED DATES
+  // ------------------------------------
   async function loadBlockedDates(usePassword = password) {
-    setLoading(true);
     setError("");
 
-    try {
-      if (!usePassword) {
-        setBlockedDates([]);
-        return;
-      }
+    if (!usePassword) return;
 
+    setLoading(true);
+
+    try {
       const res = await fetch("/api/admin/blocked", {
         method: "GET",
         headers: {
@@ -42,93 +39,67 @@ export default function AdminCalendarPage() {
       });
 
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed");
 
-      if (!res.ok) throw new Error(json?.error || `Failed (${res.status})`);
-
-      // NEW FORMAT: blocked = ["2025-12-10", "2025-12-11"]
-      const isoDates = (json.blocked || []).map((d: string) => d);
-      setBlockedDates(isoDates);
+      setBlockedDates(json.blocked || []);
     } catch (err: any) {
       console.error("loadBlockedDates error:", err);
-      if (err?.message === "Unauthorized") {
-        setError("Incorrect admin password.");
-        setAuthed(false);
-        setPassword("");
-      } else {
-        setError("Failed to load blocked dates.");
-      }
-      setBlockedDates([]);
+      setError(err.message || "Failed to load dates");
     } finally {
       setLoading(false);
     }
   }
 
-  // -------------------------------
-  // LOGIN
-  // -------------------------------
+  // ------------------------------------
+  // HANDLE LOGIN
+  // ------------------------------------
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-
-    if (!passwordInput) {
-      setError("Enter password");
-      return;
-    }
+    if (!passwordInput) return setError("Enter password");
 
     setLoading(true);
 
     try {
       const res = await fetch("/api/admin/blocked", {
         method: "GET",
-        headers: {
-          "x-admin-password": passwordInput,
-        },
+        headers: { "x-admin-password": passwordInput },
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || `Login failed`);
+      if (!res.ok) throw new Error(json.error || "Login failed");
 
-      // login successful now
       setPassword(passwordInput);
       setAuthed(true);
       setPasswordInput("");
 
-      // NEW FORMAT: strings only
-      const isoDates = (json.blocked || []).map((d: string) => d);
-      setBlockedDates(isoDates);
+      setBlockedDates(json.blocked || []);
     } catch (err: any) {
-      console.error("login error:", err);
-      if (err?.message === "Unauthorized") setError("Incorrect password");
-      else setError(err?.message || "Login failed");
+      setError("Incorrect password");
     } finally {
       setLoading(false);
     }
   }
 
-  // -------------------------------
-  // EFFECT — Keep refreshed when authed
-  // -------------------------------
   useEffect(() => {
     if (authed) loadBlockedDates(password);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
 
-  // -------------------------------
-  // DAY CLICK
-  // -------------------------------
+  // ------------------------------------
+  // SELECT DATE
+  // ------------------------------------
   const handleDayClick = (day: Date) => {
     const iso = format(day, "yyyy-MM-dd");
-    setSelectedDates((prev) => {
-      if (prev.includes(iso)) return prev.filter((d) => d !== iso);
-      return [...prev, iso];
-    });
+    setSelectedDates((prev) =>
+      prev.includes(iso) ? prev.filter((d) => d !== iso) : [...prev, iso]
+    );
   };
 
-  // -------------------------------
+  // ------------------------------------
   // BLOCK SELECTED
-  // -------------------------------
+  // ------------------------------------
   async function blockSelected() {
-    if (!authed || selectedDates.length === 0) return;
+    if (selectedDates.length === 0) return;
 
     setError("");
     setLoading(true);
@@ -143,26 +114,24 @@ export default function AdminCalendarPage() {
         body: JSON.stringify({ dates: selectedDates }),
       });
 
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "Failed to block");
-      }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Block failed");
 
       await loadBlockedDates(password);
       setSelectedDates([]);
-    } catch (err) {
-      console.error("blockSelected error:", err);
-      setError("Failed to block selected dates.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to block dates");
     } finally {
       setLoading(false);
     }
   }
 
-  // -------------------------------
+  // ------------------------------------
   // UNBLOCK SELECTED
-  // -------------------------------
+  // ------------------------------------
   async function unblockSelected() {
-    if (!authed || selectedDates.length === 0) return;
+    if (selectedDates.length === 0) return;
 
     setError("");
     setLoading(true);
@@ -177,24 +146,22 @@ export default function AdminCalendarPage() {
         body: JSON.stringify({ dates: selectedDates }),
       });
 
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        throw new Error(json.error || "Failed to unblock");
-      }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Unblock failed");
 
       await loadBlockedDates(password);
       setSelectedDates([]);
-    } catch (err) {
-      console.error("unblockSelected error:", err);
-      setError("Failed to unblock selected dates.");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to unblock dates");
     } finally {
       setLoading(false);
     }
   }
 
-  // -------------------------------
-  // LOGIN VIEW
-  // -------------------------------
+  // ------------------------------------
+  // LOGIN SCREEN
+  // ------------------------------------
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
@@ -227,9 +194,9 @@ export default function AdminCalendarPage() {
     );
   }
 
-  // -------------------------------
-  // LOGGED-IN VIEW
-  // -------------------------------
+  // ------------------------------------
+  // LOGGED IN VIEW
+  // ------------------------------------
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6">
       <header
@@ -240,17 +207,18 @@ export default function AdminCalendarPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* LEFT — CALENDAR */}
+        {/* LEFT */}
         <section className="bg-white p-6 rounded shadow">
           <div className="flex justify-between mb-4">
             <h2 className="text-lg font-semibold">Calendar</h2>
+
             <div className="flex gap-3">
               <button
                 onClick={() => loadBlockedDates(password)}
                 className="px-3 py-1 rounded border"
                 disabled={loading}
               >
-                {loading ? "Loading..." : "Refresh"}
+                {loading ? "..." : "Refresh"}
               </button>
 
               <button
@@ -267,26 +235,44 @@ export default function AdminCalendarPage() {
             </div>
           </div>
 
+          {/* CALENDAR */}
           <DayPicker
-            mode="multiple"
-            selected={selectedDates.map((d) => new Date(d))}
+            mode="single"
             onDayClick={handleDayClick}
-            modifiers={{
-              blocked: blockedDates.map((d) => new Date(d)),
-              selectedDay: selectedDates.map((d) => new Date(d)),
-            }}
-            modifiersStyles={{
-              blocked: { backgroundColor: red, color: "white" },
-              selectedDay: { backgroundColor: "#0F1F0F", color: "white" },
+            selected={selectedDates.map((d) => new Date(d))}
+            modifiers={{}}
+            styles={{
+              day: (day) => {
+                const iso = format(day, "yyyy-MM-dd");
+
+                if (blockedDates.includes(iso)) {
+                  return {
+                    backgroundColor: red,
+                    color: "white",
+                    borderRadius: "50%",
+                  };
+                }
+
+                if (selectedDates.includes(iso)) {
+                  return {
+                    backgroundColor: "#0F1F0F",
+                    color: "white",
+                    borderRadius: "50%",
+                  };
+                }
+
+                return {};
+              },
             }}
           />
 
           {error && <p className="text-red-600 mt-3">{error}</p>}
 
+          {/* BUTTONS */}
           <div className="flex gap-4 mt-6">
             <button
               onClick={blockSelected}
-              disabled={loading || selectedDates.length === 0}
+              disabled={selectedDates.length === 0 || loading}
               className="bg-red-600 text-white px-4 py-2 rounded disabled:opacity-50"
             >
               Block Selected
@@ -294,7 +280,7 @@ export default function AdminCalendarPage() {
 
             <button
               onClick={unblockSelected}
-              disabled={loading || selectedDates.length === 0}
+              disabled={selectedDates.length === 0 || loading}
               className="bg-green-600 text-white px-4 py-2 rounded disabled:opacity-50"
             >
               Unblock Selected
@@ -302,7 +288,7 @@ export default function AdminCalendarPage() {
           </div>
         </section>
 
-        {/* RIGHT — BLOCKED DATES LIST */}
+        {/* RIGHT — BLOCKED LIST */}
         <aside className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-3">Blocked Dates</h2>
 
