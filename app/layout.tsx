@@ -31,7 +31,7 @@ const abigail = localFont({
 
 export const metadata = {
   title: "Villa Anantara",
-  description: "Luxury private villa near Raipur — Villa Anantara.",
+  description: "Luxury private villa in Raipur — Villa Anantara.",
 };
 
 export default function RootLayout({

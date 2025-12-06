@@ -20,7 +20,7 @@ export default function Home() {
           {/* LEFT — LOGO */}
           <a href="/" className="flex items-center gap-3">
             <img
-              src="/images/logo.jpg"
+              src="/images/logo.png"
               alt="Villa Anantara Logo"
               className="h-10 w-auto"
             />
