@@ -23,57 +23,52 @@ export default function ConfirmedBookingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ------------------------------------------
-  // LOAD CONFIRMED BOOKINGS
-  // ------------------------------------------
+  // Track editable row
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editPaid, setEditPaid] = useState("");
+  const [editTotal, setEditTotal] = useState("");
+
+  // ------------------------------------------------------
+  // LOAD BOOKINGS
+  // ------------------------------------------------------
   async function loadBookings() {
     setLoading(true);
-    setError("");
-
     try {
       const res = await fetch("/api/admin/confirmed/list", {
         headers: { "x-admin-password": password }
       });
-
       const json = await res.json();
-
       if (!res.ok) throw new Error(json.error);
 
       setBookings(json.bookings || []);
-    } catch (err: any) {
+    } catch {
       setError("Failed to load bookings.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ------------------------------------------
-  // AUTO REFRESH EVERY 10 SECONDS
-  // ------------------------------------------
+  // Auto-refresh every 10 seconds
   useEffect(() => {
     if (!authed) return;
 
     loadBookings();
     const interval = setInterval(loadBookings, 10000);
-
     return () => clearInterval(interval);
   }, [authed]);
 
-  // ------------------------------------------
+  // ------------------------------------------------------
   // LOGIN
-  // ------------------------------------------
+  // ------------------------------------------------------
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-
     try {
       const res = await fetch("/api/admin/confirmed/list", {
         headers: { "x-admin-password": passwordInput },
       });
 
       const json = await res.json();
-
-      if (!res.ok) throw new Error(json.error || "Invalid password.");
+      if (!res.ok) throw new Error();
 
       setPassword(passwordInput);
       setAuthed(true);
@@ -84,9 +79,9 @@ export default function ConfirmedBookingsPage() {
     }
   }
 
-  // ------------------------------------------
+  // ------------------------------------------------------
   // ADD NEW BOOKING
-  // ------------------------------------------
+  // ------------------------------------------------------
   async function submitBooking() {
     if (!name || !phone || !guests || !checkIn || !checkOut || !totalAmount) {
       setError("Please fill all required fields.");
@@ -104,25 +99,20 @@ export default function ConfirmedBookingsPage() {
         (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
         (1000 * 60 * 60 * 24),
       total_amount: Number(totalAmount),
-      amount_paid: Number(amountPaid || 0)
+      amount_paid: Number(amountPaid || 0),
     };
 
     try {
       setLoading(true);
-
       const res = await fetch("/api/admin/confirmed/add", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
+        headers: { "Content-Type": "application/json", "x-admin-password": password },
         body: JSON.stringify(payload),
       });
 
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
 
-      // Reset fields
       setName("");
       setPhone("");
       setGuests("");
@@ -133,26 +123,23 @@ export default function ConfirmedBookingsPage() {
       setAmountPaid("");
 
       loadBookings();
-    } catch (err) {
+    } catch {
       setError("Failed to add booking.");
     } finally {
       setLoading(false);
     }
   }
 
-  // ------------------------------------------
+  // ------------------------------------------------------
   // DELETE BOOKING
-  // ------------------------------------------
+  // ------------------------------------------------------
   async function deleteBooking(id: number) {
     if (!confirm("Delete this booking?")) return;
 
     try {
       const res = await fetch("/api/admin/confirmed/delete", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
+        headers: { "Content-Type": "application/json", "x-admin-password": password },
         body: JSON.stringify({ id }),
       });
 
@@ -165,9 +152,64 @@ export default function ConfirmedBookingsPage() {
     }
   }
 
-  // ------------------------------------------
+  // ------------------------------------------------------
+  // UPDATE PAYMENT (Save button)
+  // ------------------------------------------------------
+  async function savePayment(id: number) {
+    try {
+      const res = await fetch("/api/admin/confirmed/updatePayment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password,
+        },
+        body: JSON.stringify({
+          id,
+          total_amount: Number(editTotal),
+          amount_paid: Number(editPaid),
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+
+      setEditingId(null);
+      loadBookings();
+    } catch {
+      setError("Failed to update payment.");
+    }
+  }
+
+  // ------------------------------------------------------
+  // MARK AS PAID (1-click)
+  // ------------------------------------------------------
+  async function markAsPaid(id: number, total_amount: number) {
+    try {
+      const res = await fetch("/api/admin/confirmed/updatePayment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password,
+        },
+        body: JSON.stringify({
+          id,
+          total_amount,
+          amount_paid: total_amount,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+
+      loadBookings();
+    } catch {
+      setError("Failed to update payment.");
+    }
+  }
+
+  // ------------------------------------------------------
   // LOGIN UI
-  // ------------------------------------------
+  // ------------------------------------------------------
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
@@ -194,9 +236,9 @@ export default function ConfirmedBookingsPage() {
     );
   }
 
-  // ------------------------------------------
+  // ------------------------------------------------------
   // MAIN UI
-  // ------------------------------------------
+  // ------------------------------------------------------
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6">
       <header
@@ -217,7 +259,7 @@ export default function ConfirmedBookingsPage() {
 
         {/* LEFT: Add Booking */}
         <section className="bg-white p-6 rounded shadow">
-          <h2 className="text-lg font-semibold mb-4">Add Confirmed Booking</h2>
+          <h2 className="text-lg font-semibold mb-4">Add New Booking</h2>
 
           <input className="w-full p-2 mb-3 border rounded" placeholder="Full name" value={name} onChange={(e) => setName(e.target.value)} />
           <input className="w-full p-2 mb-3 border rounded" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
@@ -245,35 +287,98 @@ export default function ConfirmedBookingsPage() {
         <aside className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-3">All Confirmed Bookings</h2>
 
-          {bookings.length === 0 && <p className="text-gray-500">No confirmed bookings yet.</p>}
-
           <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
             {bookings.map((b) => {
               const isPaid = Number(b.amount_due) <= 0;
+              const isEditing = editingId === b.id;
 
               return (
                 <li
                   key={b.id}
-                  className={`p-3 rounded border flex justify-between ${
+                  className={`p-4 rounded border ${
                     isPaid ? "bg-green-100 border-green-300" : "bg-red-100 border-red-300"
                   }`}
                 >
-                  <div>
-                    <p className="font-semibold">{b.name}</p>
-                    <p>{format(new Date(b.check_in), "dd MMM")} → {format(new Date(b.check_out), "dd MMM")}</p>
-                    <p>{b.guests} guests • {b.occasion}</p>
-                    <p className="mt-1 text-sm">
-                      <strong>Paid:</strong> ₹{b.amount_paid} / ₹{b.total_amount}<br />
-                      <strong>Due:</strong> ₹{b.amount_due}
-                    </p>
-                  </div>
+                  <div className="flex justify-between items-start">
 
-                  <button
-                    onClick={() => deleteBooking(b.id)}
-                    className="text-red-600 font-semibold"
-                  >
-                    Delete
-                  </button>
+                    <div>
+                      <p className="font-semibold">{b.name}</p>
+                      <p>{format(new Date(b.check_in), "dd MMM")} → {format(new Date(b.check_out), "dd MMM")}</p>
+                      <p>{b.guests} guests • {b.occasion}</p>
+
+                      {isEditing ? (
+                        <div className="mt-2 space-y-2">
+                          <input
+                            className="border p-1 rounded w-full"
+                            value={editTotal}
+                            onChange={(e) => setEditTotal(e.target.value)}
+                            placeholder="Total"
+                          />
+                          <input
+                            className="border p-1 rounded w-full"
+                            value={editPaid}
+                            onChange={(e) => setEditPaid(e.target.value)}
+                            placeholder="Paid"
+                          />
+
+                          <button
+                            onClick={() => savePayment(b.id)}
+                            className="px-3 py-1 bg-black text-white rounded mt-1"
+                          >
+                            Save
+                          </button>
+
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="px-3 py-1 bg-gray-300 rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="mt-1 text-sm leading-5">
+                          <strong>Paid:</strong> ₹{b.amount_paid} / ₹{b.total_amount}<br />
+                          <strong>Due:</strong> ₹{b.amount_due}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+
+                      {!isEditing && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingId(b.id);
+                              setEditPaid(b.amount_paid);
+                              setEditTotal(b.total_amount);
+                            }}
+                            className="text-blue-600 font-semibold"
+                          >
+                            Edit
+                          </button>
+
+                          {!isPaid && (
+                            <button
+                              onClick={() => markAsPaid(b.id, b.total_amount)}
+                              className="text-green-700 font-semibold"
+                            >
+                              Mark Paid
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      <button
+                        onClick={() => deleteBooking(b.id)}
+                        className="text-red-600 font-semibold"
+                      >
+                        Delete
+                      </button>
+
+                    </div>
+
+                  </div>
                 </li>
               );
             })}
