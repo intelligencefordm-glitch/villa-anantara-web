@@ -3,23 +3,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import {
-  addDays,
-  differenceInDays,
-  eachDayOfInterval,
-  format,
-  parseISO,
-} from "date-fns";
+import { addDays, differenceInDays, format } from "date-fns";
 
 export default function CheckAvailabilityPage() {
   const MOCHA = "#C29F80";
   const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [blockedDates, setBlockedDates] = useState<string[]>([]);
-  const [disabledDatesSet, setDisabledDatesSet] = useState<Set<string>>(new Set());
-
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -32,69 +22,8 @@ export default function CheckAvailabilityPage() {
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   // ------------------------------------
-  // FETCH BOOKINGS + BLOCKED DATES
-  // ------------------------------------
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const bRes = await fetch("/api/inquiries/list");
-        const bJson = await bRes.json();
-
-        const blkRes = await fetch("/api/admin/blocked-public");
-        const blkJson = await blkRes.json();
-
-        setBookings(bJson.inquiries || []);
-        setBlockedDates(blkJson.blocked || []);
-
-        const set = new Set<string>();
-
-        // Booked dates from inquiries
-        (bJson.inquiries || []).forEach((inq: any) => {
-          if (inq.check_in && inq.check_out) {
-            const start = parseISO(inq.check_in);
-            const end = parseISO(inq.check_out);
-            const days = eachDayOfInterval({ start, end: addDays(end, -1) });
-            days.forEach((d) => set.add(format(d, "yyyy-MM-dd")));
-          }
-        });
-
-        // Admin-blocked dates
-        (blkJson.blocked || []).forEach((d: string) => set.add(d));
-
-        setDisabledDatesSet(set);
-      } catch (err) {
-        console.error("Availability Load Error", err);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // ------------------------------------
-  // CHECK OVERLAPPING
-  // ------------------------------------
-  const selectionIntersectsDisabled = (sel: DateRange | undefined) => {
-    if (!sel?.from || !sel?.to) return false;
-
-    const days = eachDayOfInterval({
-      start: sel.from,
-      end: addDays(sel.to, -1),
-    });
-
-    for (const d of days) {
-      if (disabledDatesSet.has(format(d, "yyyy-MM-dd"))) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  // ------------------------------------
-  // DAY SELECTION HANDLER
+  // DAY SELECTION HANDLER — NO BLOCKED CHECKS
   // ------------------------------------
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
@@ -105,24 +34,14 @@ export default function CheckAvailabilityPage() {
       return;
     }
 
+    // Auto minimum 1 night
     if (differenceInDays(val.to, val.from) < 1) {
       val = { from: val.from, to: addDays(val.from, 1) };
-    }
-
-    if (selectionIntersectsDisabled(val)) {
-      setErrorMsg("Sorry — those dates are not available.");
-      return;
     }
 
     setRange(val);
 
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
-  };
-
-  const disabledPicker = (date: Date) => {
-    const key = format(date, "yyyy-MM-dd");
-    if (date < today) return true;
-    return disabledDatesSet.has(key);
   };
 
   // ------------------------------------
@@ -135,14 +54,11 @@ export default function CheckAvailabilityPage() {
   };
 
   // ------------------------------------
-  // SUBMIT INQUIRY
+  // SUBMIT INQUIRY — NO BLOCKED CHECKING
   // ------------------------------------
   const handleSubmit = async () => {
     if (!range?.from || !range?.to)
       return setErrorMsg("Please select dates first.");
-
-    if (selectionIntersectsDisabled(range))
-      return setErrorMsg("These dates are not available.");
 
     if (!name || !phone)
       return setErrorMsg("Please fill all required fields.");
@@ -167,7 +83,6 @@ export default function CheckAvailabilityPage() {
     try {
       setSaving(true);
 
-      // Save to Supabase
       const res = await fetch("/api/inquiries/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -203,17 +118,12 @@ export default function CheckAvailabilityPage() {
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
 
-      {/* CALENDAR */}
+      {/* CALENDAR — NO BLOCKED DATES SHOWN */}
       <DayPicker
         mode="range"
         selected={range}
         onSelect={handleSelect}
-        disabled={disabledPicker}
-        modifiers={{
-          booked: [...disabledDatesSet].map((d) => parseISO(d)),
-        }}
-        modifiersStyles={{
-          booked: { background: "crimson", color: "white" },
+        styles={{
           selected: { background: MOCHA, color: "white" },
         }}
       />
@@ -234,7 +144,7 @@ export default function CheckAvailabilityPage() {
       )}
 
       {/* GUEST FORM */}
-      {range?.from && range?.to && !selectionIntersectsDisabled(range) && (
+      {range?.from && range?.to && (
         <div
           ref={formRef}
           className="mt-6 p-6 rounded"
@@ -294,6 +204,12 @@ export default function CheckAvailabilityPage() {
           >
             {saving ? "Saving..." : "Confirm & Send on WhatsApp"}
           </button>
+
+          {successMsg && (
+            <div className="mt-4 p-3 bg-green-200 text-green-700 rounded">
+              {successMsg}
+            </div>
+          )}
         </div>
       )}
     </div>
