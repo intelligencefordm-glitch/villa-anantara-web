@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { addDays, differenceInDays, format } from "date-fns";
 
 export default function CheckAvailabilityPage() {
   const MOCHA = "#C29F80";
-  const DARK = "#0F1F0F";
 
   const [range, setRange] = useState<DateRange | undefined>();
   const [name, setName] = useState("");
@@ -22,9 +21,6 @@ export default function CheckAvailabilityPage() {
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
-  // ------------------------------------
-  // DAY SELECTION HANDLER — NO BLOCKED CHECKS
-  // ------------------------------------
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -34,7 +30,6 @@ export default function CheckAvailabilityPage() {
       return;
     }
 
-    // Auto minimum 1 night
     if (differenceInDays(val.to, val.from) < 1) {
       val = { from: val.from, to: addDays(val.from, 1) };
     }
@@ -44,18 +39,12 @@ export default function CheckAvailabilityPage() {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
   };
 
-  // ------------------------------------
-  // RESET DATES
-  // ------------------------------------
   const handleResetDates = () => {
     setRange(undefined);
     setErrorMsg(null);
     setSuccessMsg(null);
   };
 
-  // ------------------------------------
-  // SUBMIT INQUIRY — NO BLOCKED CHECKING
-  // ------------------------------------
   const handleSubmit = async () => {
     if (!range?.from || !range?.to)
       return setErrorMsg("Please select dates first.");
@@ -112,23 +101,26 @@ export default function CheckAvailabilityPage() {
     }
   };
 
-  // ------------------------------------
-
   return (
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
 
-      {/* CALENDAR — NO BLOCKED DATES SHOWN */}
       <DayPicker
         mode="range"
         selected={range}
         onSelect={handleSelect}
-        styles={{
-          selected: { background: MOCHA, color: "white" },
+        modifiersClassNames={{
+          selected: "custom-selected",
         }}
       />
 
-      {/* RESET DATES BUTTON */}
+      <style jsx global>{`
+        .custom-selected {
+          background-color: ${MOCHA} !important;
+          color: white !important;
+        }
+      `}</style>
+
       <button
         onClick={handleResetDates}
         className="mt-3 mb-2 px-4 py-2 rounded border border-[#0F1F0F]/40 text-sm"
@@ -136,14 +128,10 @@ export default function CheckAvailabilityPage() {
         Reset dates
       </button>
 
-      {/* Errors */}
       {errorMsg && (
-        <div className="mt-2 p-3 bg-red-200 text-red-700 rounded">
-          {errorMsg}
-        </div>
+        <div className="mt-2 p-3 bg-red-200 text-red-700 rounded">{errorMsg}</div>
       )}
 
-      {/* GUEST FORM */}
       {range?.from && range?.to && (
         <div
           ref={formRef}
@@ -173,7 +161,6 @@ export default function CheckAvailabilityPage() {
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          {/* Guests – typed number */}
           <input
             type="number"
             min={1}
@@ -181,14 +168,9 @@ export default function CheckAvailabilityPage() {
             className="w-full p-3 mb-3 rounded"
             placeholder="Guests"
             value={guests}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "") setGuests("");
-              else setGuests(Number(v));
-            }}
+            onChange={(e) => setGuests(e.target.value === "" ? "" : Number(e.target.value))}
           />
 
-          {/* Occasion */}
           <select
             className="w-full p-3 mb-3 rounded"
             value={occasion}
