@@ -23,22 +23,51 @@ export default function ConfirmedBookingsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Track editable row
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editPaid, setEditPaid] = useState("");
   const [editTotal, setEditTotal] = useState("");
 
-  // ------------------------------------------------------
-  // LOAD BOOKINGS
-  // ------------------------------------------------------
+  // -------------------------------------------
+  // LOGIN CHECK (Fix for Incorrect Password)
+  // -------------------------------------------
+  async function verifyPassword(pass: string) {
+    const res = await fetch("/api/admin/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pass }),
+    });
+
+    const json = await res.json();
+    return res.ok;
+  }
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+
+    const ok = await verifyPassword(passwordInput);
+
+    if (!ok) {
+      setError("Incorrect password");
+      return;
+    }
+
+    setPassword(passwordInput);
+    setAuthed(true);
+    setPasswordInput("");
+    loadBookings();
+  }
+
+  // -------------------------------------------
   async function loadBookings() {
     setLoading(true);
+
     try {
       const res = await fetch("/api/admin/confirmed/list", {
-        headers: { "x-admin-password": password }
+        headers: { "x-admin-password": password },
       });
+
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok) throw new Error();
 
       setBookings(json.bookings || []);
     } catch {
@@ -48,40 +77,15 @@ export default function ConfirmedBookingsPage() {
     }
   }
 
-  // Auto-refresh every 10 seconds
   useEffect(() => {
     if (!authed) return;
-
     loadBookings();
+
     const interval = setInterval(loadBookings, 10000);
     return () => clearInterval(interval);
   }, [authed]);
 
-  // ------------------------------------------------------
-  // LOGIN
-  // ------------------------------------------------------
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/admin/confirmed/list", {
-        headers: { "x-admin-password": passwordInput },
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error();
-
-      setPassword(passwordInput);
-      setAuthed(true);
-      setBookings(json.bookings);
-      setPasswordInput("");
-    } catch {
-      setError("Incorrect password");
-    }
-  }
-
-  // ------------------------------------------------------
-  // ADD NEW BOOKING
-  // ------------------------------------------------------
+  // -------------------------------------------
   async function submitBooking() {
     if (!name || !phone || !guests || !checkIn || !checkOut || !totalAmount) {
       setError("Please fill all required fields.");
@@ -104,14 +108,18 @@ export default function ConfirmedBookingsPage() {
 
     try {
       setLoading(true);
+
       const res = await fetch("/api/admin/confirmed/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": password },
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": password,
+        },
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok) throw new Error();
+      loadBookings();
 
       setName("");
       setPhone("");
@@ -121,8 +129,6 @@ export default function ConfirmedBookingsPage() {
       setCheckOut("");
       setTotalAmount("");
       setAmountPaid("");
-
-      loadBookings();
     } catch {
       setError("Failed to add booking.");
     } finally {
@@ -130,91 +136,77 @@ export default function ConfirmedBookingsPage() {
     }
   }
 
-  // ------------------------------------------------------
-  // DELETE BOOKING
-  // ------------------------------------------------------
+  // -------------------------------------------
   async function deleteBooking(id: number) {
     if (!confirm("Delete this booking?")) return;
 
-    try {
-      const res = await fetch("/api/admin/confirmed/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-password": password },
-        body: JSON.stringify({ id }),
-      });
+    await fetch("/api/admin/confirmed/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({ id }),
+    });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-
-      loadBookings();
-    } catch {
-      setError("Failed to delete booking.");
-    }
+    loadBookings();
   }
 
-  // ------------------------------------------------------
-  // UPDATE PAYMENT (Save button)
-  // ------------------------------------------------------
   async function savePayment(id: number) {
-    try {
-      const res = await fetch("/api/admin/confirmed/updatePayment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
-        body: JSON.stringify({
-          id,
-          total_amount: Number(editTotal),
-          amount_paid: Number(editPaid),
-        }),
-      });
+    const res = await fetch("/api/admin/confirmed/updatePayment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({
+        id,
+        total_amount: Number(editTotal),
+        amount_paid: Number(editPaid),
+      }),
+    });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-
-      setEditingId(null);
-      loadBookings();
-    } catch {
+    if (!res.ok) {
       setError("Failed to update payment.");
+      return;
     }
+
+    setEditingId(null);
+    loadBookings();
   }
 
-  // ------------------------------------------------------
-  // MARK AS PAID (1-click)
-  // ------------------------------------------------------
-  async function markAsPaid(id: number, total_amount: number) {
-    try {
-      const res = await fetch("/api/admin/confirmed/updatePayment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-admin-password": password,
-        },
-        body: JSON.stringify({
-          id,
-          total_amount,
-          amount_paid: total_amount,
-        }),
-      });
+  async function markAsPaid(id: number, total: number) {
+    const res = await fetch("/api/admin/confirmed/updatePayment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({
+        id,
+        total_amount: total,
+        amount_paid: total,
+      }),
+    });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-
-      loadBookings();
-    } catch {
+    if (!res.ok) {
       setError("Failed to update payment.");
+      return;
     }
+
+    loadBookings();
   }
 
-  // ------------------------------------------------------
+  // -------------------------------------------
   // LOGIN UI
-  // ------------------------------------------------------
+  // -------------------------------------------
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
         <div className="bg-white p-8 rounded shadow-md w-96">
-          <h2 className="text-2xl font-semibold mb-4 text-center">Admin Login</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-center">
+            Admin Login
+          </h2>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <input
@@ -225,9 +217,14 @@ export default function ConfirmedBookingsPage() {
               className="w-full border p-2 rounded"
             />
 
-            {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+            {error && (
+              <p className="text-red-600 text-sm text-center">{error}</p>
+            )}
 
-            <button type="submit" className="w-full bg-black text-white py-2 rounded font-semibold">
+            <button
+              type="submit"
+              className="w-full bg-black text-white py-2 rounded font-semibold"
+            >
               Login
             </button>
           </form>
@@ -236,9 +233,9 @@ export default function ConfirmedBookingsPage() {
     );
   }
 
-  // ------------------------------------------------------
+  // -------------------------------------------
   // MAIN UI
-  // ------------------------------------------------------
+  // -------------------------------------------
   return (
     <main className="min-h-screen bg-[#EFE5D5] p-6">
       <header
@@ -256,8 +253,7 @@ export default function ConfirmedBookingsPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        {/* LEFT: Add Booking */}
+        {/* LEFT – ADD BOOKING */}
         <section className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-4">Add New Booking</h2>
 
@@ -279,11 +275,9 @@ export default function ConfirmedBookingsPage() {
           <button onClick={submitBooking} className="w-full bg-black text-white py-2 rounded">
             {loading ? "Saving..." : "Add Booking"}
           </button>
-
-          {error && <p className="text-red-600 mt-3">{error}</p>}
         </section>
 
-        {/* RIGHT: Booking List */}
+        {/* RIGHT – LIST */}
         <aside className="bg-white p-6 rounded shadow">
           <h2 className="text-lg font-semibold mb-3">All Confirmed Bookings</h2>
 
@@ -296,28 +290,45 @@ export default function ConfirmedBookingsPage() {
                 <li
                   key={b.id}
                   className={`p-4 rounded border ${
-                    isPaid ? "bg-green-100 border-green-300" : "bg-red-100 border-red-300"
+                    isPaid
+                      ? "bg-green-100 border-green-300"
+                      : "bg-red-100 border-red-300"
                   }`}
                 >
                   <div className="flex justify-between items-start">
-
                     <div>
                       <p className="font-semibold">{b.name}</p>
-                      <p>{format(new Date(b.check_in), "dd MMM")} → {format(new Date(b.check_out), "dd MMM")}</p>
-                      <p>{b.guests} guests • {b.occasion}</p>
+                      <p>
+                        {format(new Date(b.check_in), "dd MMM")} →{" "}
+                        {format(new Date(b.check_out), "dd MMM")}
+                      </p>
+                      <p>
+                        {b.guests} guests • {b.occasion}
+                      </p>
 
-                      {isEditing ? (
+                      {!isEditing ? (
+                        <p className="mt-1 text-sm leading-5">
+                          <strong>Paid:</strong> ₹{b.amount_paid} / ₹
+                          {b.total_amount}
+                          <br />
+                          <strong>Due:</strong> ₹{b.amount_due}
+                        </p>
+                      ) : (
                         <div className="mt-2 space-y-2">
                           <input
                             className="border p-1 rounded w-full"
                             value={editTotal}
-                            onChange={(e) => setEditTotal(e.target.value)}
+                            onChange={(e) =>
+                              setEditTotal(e.target.value)
+                            }
                             placeholder="Total"
                           />
                           <input
                             className="border p-1 rounded w-full"
                             value={editPaid}
-                            onChange={(e) => setEditPaid(e.target.value)}
+                            onChange={(e) =>
+                              setEditPaid(e.target.value)
+                            }
                             placeholder="Paid"
                           />
 
@@ -335,16 +346,10 @@ export default function ConfirmedBookingsPage() {
                             Cancel
                           </button>
                         </div>
-                      ) : (
-                        <p className="mt-1 text-sm leading-5">
-                          <strong>Paid:</strong> ₹{b.amount_paid} / ₹{b.total_amount}<br />
-                          <strong>Due:</strong> ₹{b.amount_due}
-                        </p>
                       )}
                     </div>
 
                     <div className="flex flex-col gap-2">
-
                       {!isEditing && (
                         <>
                           <button
@@ -360,7 +365,9 @@ export default function ConfirmedBookingsPage() {
 
                           {!isPaid && (
                             <button
-                              onClick={() => markAsPaid(b.id, b.total_amount)}
+                              onClick={() =>
+                                markAsPaid(b.id, b.total_amount)
+                              }
                               className="text-green-700 font-semibold"
                             >
                               Mark Paid
@@ -375,9 +382,7 @@ export default function ConfirmedBookingsPage() {
                       >
                         Delete
                       </button>
-
                     </div>
-
                   </div>
                 </li>
               );

@@ -101,7 +101,7 @@ export default function AdminDashboard() {
 
         {/* Bookings */}
         <button
-          onClick={() => router.push("/admin/bookings")}
+          onClick={() => router.push("/admin/confirmed")}
           className="bg-white p-6 rounded shadow hover:shadow-lg transition text-left border"
         >
           <h3 className="text-xl font-semibold mb-2 text-[#0F1F0F]">Confirmed Bookings</h3>
