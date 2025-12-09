@@ -88,13 +88,20 @@ export default function Home() {
         </p>
       </section>
 
-      {/* FOOTER */}
+      {/* =========================
+          FOOTER
+      ========================= */}
       <Footer />
+
+      {/* FLOATING BUTTONS */}
       <FloatingButtons />
     </main>
   );
 }
 
+/* =========================
+   SLIDESHOW COMPONENT
+========================= */
 function Slideshow() {
   const [index, setIndex] = useState(0);
 
@@ -133,14 +140,18 @@ function Slideshow() {
   );
 }
 
+/* =========================
+   FOOTER
+========================= */
 function Footer() {
   return (
     <footer className="mt-20" style={{ backgroundColor: "#C29F80", color: "white" }}>
       <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14">
-        {/* MAP */}
+
+        {/* MINI MAP */}
         <div>
           <a
-            href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
+            href="https://maps.app.goo.gl/dNiPHToeJaQQFf3e9"
             target="_blank"
             className="block w-40 rounded-lg overflow-hidden shadow border border-white/20 mb-4"
           >
@@ -153,7 +164,7 @@ function Footer() {
           </a>
 
           <a
-            href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6?g_st=ic"
+            href="https://maps.app.goo.gl/dNiPHToeJaQQFf3e9"
             target="_blank"
             className="underline text-white font-bold hover:opacity-80"
           >
@@ -166,9 +177,7 @@ function Footer() {
           <h3 className="text-lg font-bold mb-4">Find Help</h3>
           <ul className="space-y-2">
             <li>
-              <a href="/contact" className="hover:opacity-80">
-                Contact Us
-              </a>
+              <a href="/contact" className="hover:opacity-80">Contact Us</a>
             </li>
           </ul>
         </div>
@@ -177,21 +186,9 @@ function Footer() {
         <div>
           <h3 className="text-lg font-bold mb-4">Privacy & Terms</h3>
           <ul className="space-y-2">
-            <li>
-              <a href="/privacy" className="hover:opacity-80">
-                Privacy Center
-              </a>
-            </li>
-            <li>
-              <a href="/refund" className="hover:opacity-80">
-                Refund & Cancellation Policy
-              </a>
-            </li>
-            <li>
-              <a href="/terms" className="hover:opacity-80">
-                Terms & Conditions
-              </a>
-            </li>
+            <li><a href="/privacy" className="hover:opacity-80">Privacy Center</a></li>
+            <li><a href="/refund" className="hover:opacity-80">Refund & Cancellation Policy</a></li>
+            <li><a href="/terms" className="hover:opacity-80">Terms & Conditions</a></li>
           </ul>
         </div>
 
@@ -213,9 +210,13 @@ function Footer() {
   );
 }
 
+/* =========================
+   FLOATING BUTTONS
+========================= */
 function FloatingButtons() {
   return (
     <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
+
       {/* Instagram */}
       <a
         href="https://www.instagram.com/villa.anantara/"
@@ -233,6 +234,7 @@ function FloatingButtons() {
       >
         <img src="/icons/whatsapp.png" className="w-8 h-8 invert" />
       </a>
+
     </div>
   );
 }
