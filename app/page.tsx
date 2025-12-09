@@ -67,6 +67,7 @@ function Slideshow() {
 export default function Home() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
+      
       {/* HEADER */}
       <header
         className="fixed top-0 left-0 w-full z-50"
@@ -76,6 +77,7 @@ export default function Home() {
         }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+          
           {/* Logo */}
           <a href="/" className="flex items-center gap-3">
             <img
@@ -154,9 +156,13 @@ export default function Home() {
         <h2 className="text-3xl font-semibold text-[#0F1F0F]">
           About Villa Anantara
         </h2>
-        <p className="mt-4 text-[#4a4a4a] leading-relaxed">
-          Villa Anantara is a premium private farmhouse stay near Raipur,
-          designed to offer tranquility, comfort, and a luxurious experience.
+
+        <p className="mt-4 text-[#4a4a4a] leading-relaxed text-lg">
+          <strong>Villa Anantara is crafted for those who seek more than just a stay — it is a place to pause, breathe, and reconnect.</strong>
+          <br /><br />
+          Set amidst peaceful natural surroundings in Raipur, the villa blends modern comfort with serene farmhouse charm. 
+          Whether you're celebrating a special occasion or escaping the noise of everyday life, 
+          Villa Anantara offers a private, luxurious retreat designed to make every moment unforgettable.
         </p>
       </section>
 
