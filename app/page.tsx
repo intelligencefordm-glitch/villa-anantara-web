@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-const SLIDES = Array.from({ length: 15 }, (_, i) => `/villa/anantara${i + 1}.jpg`);
+const SLIDES = Array.from({ length: 15 }, (_, i) => `/villa/anantara${i + 1}.webp`);
 
 export default function Home() {
   return (
