@@ -6,6 +6,7 @@ const SLIDES = Array.from({ length: 15 }, (_, i) => `/villa/anantara${i + 1}.jpg
 export default function Home() {
   return (
     <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
+      
       {/* =========================
           HEADER
       ========================= */}
@@ -17,6 +18,7 @@ export default function Home() {
         }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+
           {/* LOGO */}
           <a href="/" className="flex items-center gap-3">
             <img src="/images/logo.png" alt="Villa Anantara Logo" className="h-10 w-auto" />
@@ -39,6 +41,7 @@ export default function Home() {
             <a href="/check" className="hover:opacity-80">Check Availability</a>
             <a href="/contact" className="hover:opacity-80">Contact</a>
           </nav>
+
         </div>
 
         {/* MOBILE NAV */}
@@ -54,9 +57,24 @@ export default function Home() {
       <div style={{ height: "110px" }} />
 
       {/* =========================
-          SLIDESHOW
+          HERO VIDEO SECTION
       ========================= */}
-      <section className="max-w-6xl mx-auto px-6 py-10 text-center">
+      <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
+        <video
+          src="/videos/hero.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/35"></div>
+      </section>
+
+      {/* =========================
+          SLIDESHOW SECTION
+      ========================= */}
+      <section className="max-w-6xl mx-auto px-6 py-14 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-6">
           Villa Anantara
         </h2>
@@ -79,18 +97,14 @@ export default function Home() {
         className="max-w-6xl mx-auto px-6 py-20 border-t"
         style={{ borderColor: "rgba(15,31,15,0.08)" }}
       >
-        <h2 className="text-3xl font-semibold text-[#0F1F0F]">
-          About Villa Anantara
-        </h2>
+        <h2 className="text-3xl font-semibold text-[#0F1F0F]">About Villa Anantara</h2>
         <p className="mt-4 text-[#4a4a4a] leading-relaxed">
           Villa Anantara is a premium private farmhouse stay near Raipur designed
           to offer tranquility, comfort, and a luxurious experience.
         </p>
       </section>
 
-      {/* =========================
-          FOOTER
-      ========================= */}
+      {/* FOOTER */}
       <Footer />
 
       {/* FLOATING BUTTONS */}
@@ -176,9 +190,7 @@ function Footer() {
         <div>
           <h3 className="text-lg font-bold mb-4">Find Help</h3>
           <ul className="space-y-2">
-            <li>
-              <a href="/contact" className="hover:opacity-80">Contact Us</a>
-            </li>
+            <li><a href="/contact" className="hover:opacity-80">Contact Us</a></li>
           </ul>
         </div>
 
@@ -201,6 +213,7 @@ function Footer() {
             <li><a href="/contact" className="hover:opacity-80">Contact</a></li>
           </ul>
         </div>
+
       </div>
 
       <div className="text-center py-4 text-xs text-white/80">
