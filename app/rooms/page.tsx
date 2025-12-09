@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const MOCHA = "#C29F80";
 
@@ -16,12 +16,12 @@ const rooms: Room[] = [
     description:
       "A spacious master bedroom with warm wood tones, natural textures and a cosy ambience. Designed for peaceful, luxurious rest.",
     images: [
-      "/room1-1.jpg",
-      "/room1-2.jpg",
-      "/room1-3.jpg",
-      "/room1-4.jpg",
-      "/room1-5.jpg",
-      "/room1-6.jpg",
+      "/rooms/room1-1.jpg",
+      "/rooms/room1-2.jpg",
+      "/rooms/room1-3.jpg",
+      "/rooms/room1-4.jpg",
+      "/rooms/room1-5.jpg",
+      "/rooms/room1-6.jpg",
     ],
   },
   {
@@ -29,12 +29,12 @@ const rooms: Room[] = [
     description:
       "Earthy tones, artistic ceiling lines and a serene vibe create a relaxing environment ideal for unwinding and rejuvenating.",
     images: [
-      "/room2-1.jpg",
-      "/room2-2.jpg",
-      "/room2-3.jpg",
-      "/room2-4.jpg",
-      "/room2-5.jpg",
-      "/room2-6.jpg",
+      "/rooms/room2-1.jpg",
+      "/rooms/room2-2.jpg",
+      "/rooms/room2-3.jpg",
+      "/rooms/room2-4.jpg",
+      "/rooms/room2-5.jpg",
+      "/rooms/room2-6.jpg",
     ],
   },
   {
@@ -42,19 +42,19 @@ const rooms: Room[] = [
     description:
       "Soft lighting, rich textures and a warm atmosphere define this premium suite — perfect for restful nights and cosy mornings.",
     images: [
-      "/room3-1.jpg",
-      "/room3-2.jpg",
-      "/room3-3.jpg",
-      "/room3-4.jpg",
-      "/room3-5.jpg",
-      "/room3-6.jpg",
+      "/rooms/room3-1.jpg",
+      "/rooms/room3-2.jpg",
+      "/rooms/room3-3.jpg",
+      "/rooms/room3-4.jpg",
+      "/rooms/room3-5.jpg",
+      "/rooms/room3-6.jpg",
     ],
   },
 ];
 
 export default function RoomsPage() {
   return (
-    <main className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
+    <main className="min-h-screen p-6 relative" style={{ background: "#EFE5D5" }}>
       {/* Back Button */}
       <button
         onClick={() => window.history.back()}
@@ -70,15 +70,33 @@ export default function RoomsPage() {
           <RoomCard key={index} room={room} />
         ))}
       </div>
+
+      {/* ⭐ Floating Book Now Button */}
+      <button
+        onClick={() => (window.location.href = "/check")}
+        className="fixed bottom-6 right-6 bg-black text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold hover:bg-gray-900 transition-all"
+        style={{ zIndex: 999 }}
+      >
+        Book Now
+      </button>
     </main>
   );
 }
 
 function RoomCard({ room }: { room: Room }) {
   const [i, setI] = useState(0);
+  const total = room.images.length;
 
-  const prev = () => setI((i - 1 + room.images.length) % room.images.length);
-  const next = () => setI((i + 1) % room.images.length);
+  const prev = () => setI((prev) => (prev - 1 + total) % total);
+  const next = () => setI((prev) => (prev + 1) % total);
+
+  // Auto-slide every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setI((prev) => (prev + 1) % total);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [total]);
 
   return (
     <section className="bg-white rounded-xl shadow overflow-hidden">
@@ -104,7 +122,7 @@ function RoomCard({ room }: { room: Room }) {
 
           <img
             src={room.images[i]}
-            alt={room.name}
+            alt={`${room.name} photo ${i + 1}`}
             className="w-full h-full object-cover"
           />
 
@@ -115,6 +133,18 @@ function RoomCard({ room }: { room: Room }) {
           >
             ›
           </button>
+
+          {/* Dots */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+            {room.images.map((_, idx) => (
+              <span
+                key={idx}
+                className={`w-2.5 h-2.5 rounded-full ${
+                  idx === i ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -21,6 +21,13 @@ export default function CheckAvailabilityPage() {
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
+  // ⭐ NEW: Calendar Instruction Text Logic
+  const getCalendarText = () => {
+    if (!range?.from && !range?.to) return "Select Check In Date";
+    if (range?.from && !range?.to) return "Select Check Out Date";
+    return "";
+  };
+
   const handleSelect = (val: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -105,6 +112,13 @@ export default function CheckAvailabilityPage() {
     <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
 
+      {/* ⭐ NEW: Calendar Instruction Text */}
+      {getCalendarText() && (
+        <div className="mb-3 text-lg font-medium text-[#0F1F0F]">
+          {getCalendarText()}
+        </div>
+      )}
+
       <DayPicker
         mode="range"
         selected={range}
@@ -168,7 +182,9 @@ export default function CheckAvailabilityPage() {
             className="w-full p-3 mb-3 rounded"
             placeholder="Guests"
             value={guests}
-            onChange={(e) => setGuests(e.target.value === "" ? "" : Number(e.target.value))}
+            onChange={(e) =>
+              setGuests(e.target.value === "" ? "" : Number(e.target.value))
+            }
           />
 
           <select
