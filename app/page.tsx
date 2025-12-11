@@ -118,8 +118,30 @@ export default function Home() {
       {/* Spacer for fixed header */}
       <div style={{ height: "110px" }} />
 
-      {/* HERO VIDEO */}
-      <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden">
+      {/* =========================
+          TOP IMAGE WITH BLUR BG
+      ========================= */}
+      <section className="relative w-full h-[500px] md:h-[650px] overflow-hidden">
+
+        {/* Blurred background fill */}
+        <img
+          src="/MAIN.jpg"
+          className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70"
+          alt="Villa Main Background"
+        />
+
+        {/* Sharp centered image */}
+        <img
+          src="/MAIN.jpg"
+          className="absolute inset-0 m-auto h-full w-auto max-w-none object-contain drop-shadow-xl"
+          alt="Villa Main"
+        />
+      </section>
+
+      {/* =========================
+          HERO VIDEO
+      ========================= */}
+      <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden mt-10">
         <video
           src="/videos/hero.mp4"
           autoPlay
@@ -131,7 +153,9 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/35"></div>
       </section>
 
-      {/* SLIDESHOW */}
+      {/* =========================
+          SLIDESHOW + TITLE
+      ========================= */}
       <section className="px-6 py-16 text-center">
         <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-6">
           Villa Anantara
@@ -148,7 +172,9 @@ export default function Home() {
         </a>
       </section>
 
-      {/* ABOUT SECTION */}
+      {/* =========================
+          ABOUT SECTION
+      ========================= */}
       <section
         className="max-w-6xl mx-auto px-6 py-20 border-t"
         style={{ borderColor: "rgba(15,31,15,0.08)" }}
