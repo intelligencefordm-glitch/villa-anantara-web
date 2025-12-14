@@ -57,8 +57,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">4. Check-In & Check-Out</h2>
           <ul className="list-disc ml-6 space-y-2">
-            <li>Check-in: 11:00 AM</li>
-            <li>Check-out: 9:00 AM</li>
+            <li>Check-in: 12:00 PM</li>
+            <li>Check-out: 11:00 AM</li>
             <li>Early check-in or late check-out may incur additional cost.</li>
           </ul>
         </section>
