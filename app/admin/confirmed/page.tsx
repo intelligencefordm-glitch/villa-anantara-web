@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 
 const MOCHA = "#C29F80";
@@ -22,29 +22,41 @@ type Booking = {
 };
 
 export default function ConfirmedBookingsPage() {
+  // ---------------- AUTH ----------------
   const [passwordInput, setPasswordInput] = useState("");
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
 
+  // ---------------- DATA ----------------
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleLogin(e: React.FormEvent) {
+  // ---------------- LOGIN ----------------
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!passwordInput) return;
+
     setPassword(passwordInput);
     setAuthed(true);
     setPasswordInput("");
   }
 
+  // ---------------- LOAD BOOKINGS ----------------
   async function loadBookings() {
     try {
       setLoading(true);
+      setError("");
+
       const res = await fetch("/api/admin/confirmed/list", {
-        headers: { "x-admin-password": password },
+        headers: {
+          "x-admin-password": password,
+        },
       });
+
       const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+
       setBookings(json.bookings || []);
     } catch {
       setError("Failed to load bookings");
@@ -57,37 +69,73 @@ export default function ConfirmedBookingsPage() {
     if (authed) loadBookings();
   }, [authed]);
 
-  async function viewDocument(path?: string | null) {
-    if (!path) return;
+  // ---------------- VIEW / DOWNLOAD FILE ----------------
+  async function openDocument(path: string, download = false) {
     const res = await fetch("/api/admin/document", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({ path, download }),
     });
+
     const json = await res.json();
-    if (json.url) window.open(json.url, "_blank");
+    if (!json.url) {
+      alert("Failed to open document");
+      return;
+    }
+
+    window.open(json.url, "_blank");
   }
 
+  // ---------------- DELETE ----------------
+  async function deleteBooking(id: number) {
+    if (!confirm("Delete this booking?")) return;
+
+    await fetch("/api/admin/confirmed/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    loadBookings();
+  }
+
+  // ---------------- LOGIN UI ----------------
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded shadow w-96">
-          <h2 className="text-xl font-semibold mb-4 text-center">Admin Login</h2>
-          <input
-            type="password"
-            placeholder="Admin Password"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            className="w-full border p-2 rounded mb-4"
-          />
-          <button className="w-full bg-black text-white py-2 rounded">
-            Login
-          </button>
-        </form>
+        <div className="bg-white p-8 rounded shadow w-96">
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Admin Login
+          </h2>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              placeholder="Admin Password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className="w-full border p-2 rounded"
+            />
+
+            <button
+              type="submit"
+              className="w-full bg-black text-white py-2 rounded"
+            >
+              Login
+            </button>
+          </form>
+        </div>
       </main>
     );
   }
 
+  // ---------------- MAIN UI ----------------
   return (
     <main className="min-h-screen p-6" style={{ background: BG }}>
       <header
@@ -95,38 +143,83 @@ export default function ConfirmedBookingsPage() {
         style={{ backgroundColor: MOCHA, color: "white" }}
       >
         <h1 className="text-xl font-bold">Confirmed Bookings</h1>
-        <button onClick={loadBookings}>Refresh</button>
+        <button
+          onClick={loadBookings}
+          className="bg-white/20 px-4 py-2 rounded"
+        >
+          Refresh
+        </button>
       </header>
 
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-red-600 mb-3">{error}</p>}
 
-      <ul className="space-y-3">
-        {bookings.map((b) => (
-          <li key={b.id} className="bg-white p-4 rounded shadow">
-            <p className="font-semibold">{b.name}</p>
-            <p className="text-sm">
-              {format(new Date(b.check_in), "dd MMM")} →{" "}
-              {format(new Date(b.check_out), "dd MMM")}
-            </p>
-            <p className="text-sm">
-              ₹{b.amount_paid} / ₹{b.total_amount}
-            </p>
+      {loading && <p className="mb-3">Loading...</p>}
 
-            <div className="flex gap-4 mt-2 text-sm">
-              {b.id_proof_path && (
-                <button onClick={() => viewDocument(b.id_proof_path)}>
-                  View ID
+      <div className="bg-white p-6 rounded shadow">
+        <ul className="space-y-4">
+          {bookings.map((b) => (
+            <li key={b.id} className="border p-4 rounded">
+              <p className="font-semibold">{b.name}</p>
+              <p className="text-sm">
+                {format(new Date(b.check_in), "dd MMM")} →{" "}
+                {format(new Date(b.check_out), "dd MMM")}
+              </p>
+              <p className="text-sm">
+                ₹{b.amount_paid} / ₹{b.total_amount} • Due ₹{b.amount_due}
+              </p>
+
+              <div className="flex flex-wrap gap-3 mt-3 text-sm">
+                {b.id_proof_path && (
+                  <>
+                    <button
+                      onClick={() => openDocument(b.id_proof_path)}
+                      className="text-blue-700 font-semibold"
+                    >
+                      View ID Proof
+                    </button>
+                    <button
+                      onClick={() => openDocument(b.id_proof_path, true)}
+                      className="text-blue-500 underline"
+                    >
+                      Download ID
+                    </button>
+                  </>
+                )}
+
+                {b.payment_proof_path && (
+                  <>
+                    <button
+                      onClick={() => openDocument(b.payment_proof_path)}
+                      className="text-green-700 font-semibold"
+                    >
+                      View Payment Proof
+                    </button>
+                    <button
+                      onClick={() =>
+                        openDocument(b.payment_proof_path, true)
+                      }
+                      className="text-green-500 underline"
+                    >
+                      Download Payment
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => deleteBooking(b.id)}
+                  className="text-red-600 font-semibold"
+                >
+                  Delete
                 </button>
-              )}
-              {b.payment_proof_path && (
-                <button onClick={() => viewDocument(b.payment_proof_path)}>
-                  View Payment
-                </button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+              </div>
+            </li>
+          ))}
+
+          {bookings.length === 0 && (
+            <p className="text-sm text-gray-500">No bookings found.</p>
+          )}
+        </ul>
+      </div>
     </main>
   );
 }
