@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // IMPORTANT
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // REQUIRED
 );
 
 export async function POST(req: Request) {
@@ -14,25 +14,24 @@ export async function POST(req: Request) {
     const phone = formData.get("phone") as string;
     const guests = Number(formData.get("guests"));
     const occasion = formData.get("occasion") as string;
-    const check_in = formData.get("check_in") as string;
-    const check_out = formData.get("check_out") as string;
-    const nights = Number(formData.get("nights"));
-    const total_amount = Number(formData.get("total_amount"));
-    const amount_paid = Number(formData.get("amount_paid") || 0);
-    const payment_mode = formData.get("payment_mode") as string;
-    const id_proof_type = formData.get("id_proof_type") as string;
-    const idFile = formData.get("id_file") as File | null;
+    const checkIn = formData.get("check_in") as string;
+    const checkOut = formData.get("check_out") as string;
+    const totalAmount = Number(formData.get("total_amount"));
+    const amountPaid = Number(formData.get("amount_paid") || 0);
+    const paymentMode = formData.get("payment_mode") as string;
+    const idProofType = formData.get("id_proof_type") as string;
+
+    const idFile = formData.get("id_proof") as File | null;
+    const paymentFile = formData.get("payment_proof") as File | null;
 
     if (
       !name ||
       !phone ||
       !guests ||
-      !check_in ||
-      !check_out ||
-      !nights ||
-      !total_amount ||
-      !payment_mode ||
-      !id_proof_type ||
+      !checkIn ||
+      !checkOut ||
+      !totalAmount ||
+      !idProofType ||
       !idFile
     ) {
       return NextResponse.json(
@@ -41,62 +40,89 @@ export async function POST(req: Request) {
       );
     }
 
-    /* -----------------------------
-       Upload ID proof to storage
-    ----------------------------- */
-    const fileExt = idFile.name.split(".").pop();
-    const filePath = `ids/${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2)}.${fileExt}`;
+    const nights =
+      (new Date(checkOut).getTime() - new Date(checkIn).getTime()) /
+      (1000 * 60 * 60 * 24);
 
-    const { error: uploadError } = await supabase.storage
+    if (nights <= 0) {
+      return NextResponse.json(
+        { error: "Invalid date range" },
+        { status: 400 }
+      );
+    }
+
+    // -----------------------------
+    // Upload ID proof
+    // -----------------------------
+    const idPath = `ids/${Date.now()}-${idFile.name}`;
+
+    const { error: idUploadError } = await supabase.storage
       .from("booking-documents")
-      .upload(filePath, idFile, {
-        cacheControl: "3600",
+      .upload(idPath, idFile, {
         upsert: false,
+        contentType: idFile.type,
       });
 
-    if (uploadError) {
-      console.error(uploadError);
+    if (idUploadError) {
       return NextResponse.json(
-        { error: "Failed to upload ID proof" },
+        { error: "ID upload failed" },
         { status: 500 }
       );
     }
 
-    /* -----------------------------
-       Insert booking
-    ----------------------------- */
+    // -----------------------------
+    // Upload payment proof (only UPI)
+    // -----------------------------
+    let paymentPath: string | null = null;
+
+    if (paymentMode === "UPI" && paymentFile) {
+      paymentPath = `payments/${Date.now()}-${paymentFile.name}`;
+
+      const { error: payUploadError } = await supabase.storage
+        .from("booking-documents")
+        .upload(paymentPath, paymentFile, {
+          upsert: false,
+          contentType: paymentFile.type,
+        });
+
+      if (payUploadError) {
+        return NextResponse.json(
+          { error: "Payment upload failed" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // -----------------------------
+    // Insert booking
+    // -----------------------------
     const { error: insertError } = await supabase
       .from("confirmed_bookings")
-      .insert([
-        {
-          name,
-          phone,
-          guests,
-          occasion,
-          check_in,
-          check_out,
-          nights,
-          total_amount,
-          amount_paid,
-          payment_mode,
-          id_proof_type,
-          id_proof_path: filePath,
-        },
-      ]);
+      .insert({
+        name,
+        phone,
+        guests,
+        occasion,
+        check_in: checkIn,
+        check_out: checkOut,
+        nights,
+        total_amount: totalAmount,
+        amount_paid: amountPaid,
+        payment_mode: paymentMode,
+        id_proof_type: idProofType,
+        id_proof_path: idPath,
+        payment_proof_path: paymentPath,
+      });
 
     if (insertError) {
-      console.error(insertError);
       return NextResponse.json(
         { error: insertError.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error(err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
