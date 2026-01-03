@@ -8,223 +8,271 @@ const DARK = "#0F1F0F";
 
 export default function ConfirmBookingPage() {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    guests: "",
-    check_in: "",
-    check_out: "",
-    advance_amount: "",
-    payment_mode: "online",
-    id_proof_type: "Aadhaar",
-  });
+  // FORM FIELDS
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [guests, setGuests] = useState("");
+  const [occasion, setOccasion] = useState("Stay");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
+  const [totalAmount, setTotalAmount] = useState("");
+  const [amountPaid, setAmountPaid] = useState("");
+  const [paymentMode, setPaymentMode] = useState("online");
+  const [idProofType, setIdProofType] = useState("Aadhaar");
 
-  const [idProof, setIdProof] = useState<File | null>(null);
-  const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  // FILES
+  const [idProofFile, setIdProofFile] = useState<File | null>(null);
+  const [paymentScreenshotFile, setPaymentScreenshotFile] =
+    useState<File | null>(null);
+
   const [agree, setAgree] = useState(false);
 
-  // ---------------------------
-  // SUBMIT HANDLER
-  // ---------------------------
-  const handleSubmit = async () => {
-    setMessage(null);
+  // ----------------------------------
+  // SUBMIT HANDLER (FormData)
+  // ----------------------------------
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(false);
 
     if (!agree) {
-      setMessage("Please accept Terms & Conditions");
+      setError("Please accept Terms & Conditions");
       return;
     }
 
     if (
-      !form.name ||
-      !form.phone ||
-      !form.guests ||
-      !form.check_in ||
-      !form.check_out
+      !name ||
+      !phone ||
+      !guests ||
+      !checkIn ||
+      !checkOut ||
+      !totalAmount
     ) {
-      setMessage("Please fill all required fields");
+      setError("Please fill all required fields");
       return;
     }
 
-    if (!idProof) {
-      setMessage("Please upload an ID proof");
+    if (!idProofFile) {
+      setError("ID proof is required");
       return;
     }
 
-    if (form.payment_mode === "online" && !paymentProof) {
-      setMessage("Please upload payment screenshot");
+    if (paymentMode === "online" && !paymentScreenshotFile) {
+      setError("Payment screenshot is required for online payments");
       return;
     }
 
     try {
       setLoading(true);
 
-      const data = new FormData();
-      Object.entries(form).forEach(([k, v]) => data.append(k, v));
-      data.append("id_proof", idProof);
-      if (paymentProof) data.append("payment_proof", paymentProof);
+      const formData = new FormData();
 
-      const res = await fetch("/api/confirmed/add", {
+      // TEXT FIELDS
+      formData.append("name", name);
+      formData.append("phone", phone);
+      formData.append("guests", guests);
+      formData.append("occasion", occasion);
+      formData.append("check_in", checkIn);
+      formData.append("check_out", checkOut);
+      formData.append("total_amount", totalAmount);
+      formData.append("amount_paid", amountPaid || "0");
+      formData.append("payment_mode", paymentMode);
+      formData.append("id_proof_type", idProofType);
+
+      // FILES
+      formData.append("id_proof", idProofFile);
+      if (paymentMode === "online" && paymentScreenshotFile) {
+        formData.append("payment_screenshot", paymentScreenshotFile);
+      }
+
+      const res = await fetch("/api/confirm-booking", {
         method: "POST",
-        body: data,
+        body: formData, // ❗ NO headers
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok) {
+        throw new Error("Submission failed");
+      }
 
-      setMessage("✅ Booking confirmed successfully!");
-      setForm({
-        name: "",
-        phone: "",
-        email: "",
-        guests: "",
-        check_in: "",
-        check_out: "",
-        advance_amount: "",
-        payment_mode: "online",
-        id_proof_type: "Aadhaar",
-      });
-      setIdProof(null);
-      setPaymentProof(null);
+      setSuccess(true);
+
+      // RESET FORM
+      setName("");
+      setPhone("");
+      setGuests("");
+      setOccasion("Stay");
+      setCheckIn("");
+      setCheckOut("");
+      setTotalAmount("");
+      setAmountPaid("");
+      setPaymentMode("online");
+      setIdProofType("Aadhaar");
+      setIdProofFile(null);
+      setPaymentScreenshotFile(null);
       setAgree(false);
     } catch (err) {
-      setMessage("❌ Failed to submit booking. Please try again.");
+      console.error(err);
+      setError("Failed to submit booking. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
+  // ----------------------------------
   return (
-    <main className="min-h-screen px-6 py-12" style={{ background: BG }}>
-      <div className="max-w-xl mx-auto bg-white rounded-xl shadow p-6">
+    <main className="min-h-screen px-6 py-10" style={{ background: BG }}>
+      <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
         <h1
-          className="text-2xl font-bold mb-6 text-center"
+          className="text-2xl font-bold text-center mb-6"
           style={{ color: DARK }}
         >
           Confirm Your Booking
         </h1>
 
-        {/* INPUTS */}
-        {[
-          ["name", "Full Name *"],
-          ["phone", "Phone *"],
-          ["email", "Email"],
-          ["guests", "Number of Guests *"],
-          ["advance_amount", "Advance Amount Paid *"],
-        ].map(([key, label]) => (
+        <form onSubmit={handleSubmit} className="space-y-3">
           <input
-            key={key}
-            placeholder={label}
-            className="w-full p-3 mb-3 border rounded"
-            value={(form as any)[key]}
-            onChange={(e) =>
-              setForm({ ...form, [key]: e.target.value })
-            }
+            className="w-full p-3 border rounded"
+            placeholder="Full Name *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
           />
-        ))}
 
-        <label className="text-sm">Check-in *</label>
-        <input
-          type="date"
-          className="w-full p-3 mb-3 border rounded"
-          value={form.check_in}
-          onChange={(e) =>
-            setForm({ ...form, check_in: e.target.value })
-          }
-        />
+          <input
+            className="w-full p-3 border rounded"
+            placeholder="Phone Number *"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
 
-        <label className="text-sm">Check-out *</label>
-        <input
-          type="date"
-          className="w-full p-3 mb-4 border rounded"
-          value={form.check_out}
-          onChange={(e) =>
-            setForm({ ...form, check_out: e.target.value })
-          }
-        />
+          <input
+            className="w-full p-3 border rounded"
+            placeholder="Number of Guests *"
+            value={guests}
+            onChange={(e) => setGuests(e.target.value)}
+          />
 
-        {/* ID PROOF */}
-        <label className="text-sm font-semibold">ID Proof *</label>
-        <select
-          className="w-full p-3 mb-2 border rounded"
-          value={form.id_proof_type}
-          onChange={(e) =>
-            setForm({ ...form, id_proof_type: e.target.value })
-          }
-        >
-          <option>Aadhaar</option>
-          <option>Driving Licence</option>
-          <option>Passport</option>
-          <option>Voter ID</option>
-        </select>
+          <select
+            className="w-full p-3 border rounded"
+            value={occasion}
+            onChange={(e) => setOccasion(e.target.value)}
+          >
+            <option value="Stay">Stay</option>
+            <option value="Other">Other</option>
+          </select>
 
-        <input
-          type="file"
-          className="w-full mb-4"
-          onChange={(e) => setIdProof(e.target.files?.[0] || null)}
-        />
+          <label className="text-sm">Check-in *</label>
+          <input
+            type="date"
+            className="w-full p-3 border rounded"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+          />
 
-        {/* PAYMENT MODE */}
-        <label className="text-sm font-semibold">Payment Mode *</label>
-        <select
-          className="w-full p-3 mb-3 border rounded"
-          value={form.payment_mode}
-          onChange={(e) =>
-            setForm({ ...form, payment_mode: e.target.value })
-          }
-        >
-          <option value="online">UPI / Online</option>
-          <option value="cash">Cash</option>
-        </select>
+          <label className="text-sm">Check-out *</label>
+          <input
+            type="date"
+            className="w-full p-3 border rounded"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+          />
 
-        {/* PAYMENT PROOF (ONLY IF ONLINE) */}
-        {form.payment_mode === "online" && (
-          <>
-            <label className="text-sm">Upload Payment Screenshot *</label>
+          <input
+            className="w-full p-3 border rounded"
+            placeholder="Total Amount *"
+            value={totalAmount}
+            onChange={(e) => setTotalAmount(e.target.value)}
+          />
+
+          <input
+            className="w-full p-3 border rounded"
+            placeholder="Advance Paid (if any)"
+            value={amountPaid}
+            onChange={(e) => setAmountPaid(e.target.value)}
+          />
+
+          <select
+            className="w-full p-3 border rounded"
+            value={paymentMode}
+            onChange={(e) => setPaymentMode(e.target.value)}
+          >
+            <option value="online">UPI / Online</option>
+            <option value="cash">Cash</option>
+          </select>
+
+          <select
+            className="w-full p-3 border rounded"
+            value={idProofType}
+            onChange={(e) => setIdProofType(e.target.value)}
+          >
+            <option>Aadhaar</option>
+            <option>Driving Licence</option>
+            <option>Passport</option>
+            <option>Voter ID</option>
+          </select>
+
+          <label className="text-sm">Upload ID Proof *</label>
+          <input
+            type="file"
+            className="w-full"
+            onChange={(e) => setIdProofFile(e.target.files?.[0] || null)}
+          />
+
+          {paymentMode === "online" && (
+            <>
+              <label className="text-sm">
+                Upload Payment Screenshot *
+              </label>
+              <input
+                type="file"
+                className="w-full"
+                onChange={(e) =>
+                  setPaymentScreenshotFile(e.target.files?.[0] || null)
+                }
+              />
+            </>
+          )}
+
+          <div className="flex items-start gap-2 text-sm mt-3">
             <input
-              type="file"
-              className="w-full mb-4"
-              onChange={(e) =>
-                setPaymentProof(e.target.files?.[0] || null)
-              }
+              type="checkbox"
+              checked={agree}
+              onChange={() => setAgree(!agree)}
             />
-          </>
-        )}
+            <span>
+              I agree to the{" "}
+              <a
+                href="/terms"
+                target="_blank"
+                className="underline font-semibold"
+                style={{ color: DARK }}
+              >
+                Terms & Conditions
+              </a>
+            </span>
+          </div>
 
-        {/* TERMS */}
-        <div className="flex items-start gap-2 text-sm mb-4">
-          <input
-            type="checkbox"
-            checked={agree}
-            onChange={() => setAgree(!agree)}
-          />
-          <span>
-            I accept the{" "}
-            <a
-              href="/terms"
-              target="_blank"
-              className="underline font-semibold"
-              style={{ color: DARK }}
-            >
-              Terms & Conditions
-            </a>
-          </span>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full p-3 mt-4 rounded text-white font-semibold"
+            style={{ background: MOCHA }}
+          >
+            {loading ? "Submitting..." : "Confirm Booking"}
+          </button>
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full p-3 rounded text-white font-semibold"
-          style={{ background: MOCHA }}
-        >
-          {loading ? "Submitting..." : "Confirm Booking"}
-        </button>
+          {error && (
+            <p className="text-red-600 text-center mt-3">{error}</p>
+          )}
 
-        {message && (
-          <p className="mt-4 text-center font-medium">{message}</p>
-        )}
+          {success && (
+            <p className="text-green-700 text-center mt-3 font-semibold">
+              Booking confirmed successfully!
+            </p>
+          )}
+        </form>
       </div>
     </main>
   );
