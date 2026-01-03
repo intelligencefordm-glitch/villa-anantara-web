@@ -87,6 +87,23 @@ export default function ConfirmedBookingsPage() {
     }
   }
 
+  // 🔥 ---------------- DELETE BOOKING (ADDED) ----------------
+  async function deleteBooking(id: number) {
+    const ok = confirm("Are you sure you want to delete this booking?");
+    if (!ok) return;
+
+    await fetch("/api/admin/confirmed/delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-password": password,
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    loadBookings();
+  }
+
   // ---------------- LOGIN UI ----------------
   if (!authed) {
     return (
@@ -131,7 +148,6 @@ export default function ConfirmedBookingsPage() {
       </header>
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
-
       {loading && <p>Loading...</p>}
 
       {!loading && bookings.length === 0 && (
@@ -171,6 +187,14 @@ export default function ConfirmedBookingsPage() {
                   View / Download Payment Proof
                 </button>
               )}
+
+              {/* 🔥 DELETE BUTTON (ADDED) */}
+              <button
+                onClick={() => deleteBooking(b.id)}
+                className="text-red-600 font-semibold"
+              >
+                Delete Booking
+              </button>
             </div>
           </li>
         ))}
