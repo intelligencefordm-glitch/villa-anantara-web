@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
-// Server-side Supabase client (SERVICE ROLE)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -13,82 +12,79 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
-    // -----------------------------
-    // 1. Read form fields
-    // -----------------------------
+    // -------------------------
+    // Extract fields
+    // -------------------------
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
     const guests = Number(formData.get("guests"));
-    const occasion = formData.get("occasion") as string;
-    const checkIn = formData.get("check_in") as string;
-    const checkOut = formData.get("check_out") as string;
-    const totalAmount = Number(formData.get("total_amount"));
-    const amountPaid = Number(formData.get("amount_paid"));
-    const paymentMode = formData.get("payment_mode") as string;
-    const idProofType = formData.get("id_proof_type") as string;
+    const occasion = (formData.get("occasion") as string) || "Stay";
+    const check_in = formData.get("check_in") as string;
+    const check_out = formData.get("check_out") as string;
+    const total_amount = Number(formData.get("total_amount"));
+    const amount_paid = Number(formData.get("amount_paid"));
+    const payment_mode = formData.get("payment_mode") as string;
+    const id_proof_type = formData.get("id_proof_type") as string;
+    const idFile = formData.get("id_proof") as File;
 
-    const idFile = formData.get("id_proof") as File | null;
-    const paymentFile = formData.get("payment_screenshot") as File | null;
-
-    if (!name || !phone || !checkIn || !checkOut || !guests) {
+    // -------------------------
+    // Basic validation
+    // -------------------------
+    if (
+      !name ||
+      !phone ||
+      !guests ||
+      !check_in ||
+      !check_out ||
+      !total_amount ||
+      !payment_mode ||
+      !id_proof_type ||
+      !idFile
+    ) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // -----------------------------
-    // 2. Upload documents (PRIVATE BUCKET)
-    // -----------------------------
-    let idProofPath: string | null = null;
-    let paymentProofPath: string | null = null;
+    // -------------------------
+    // Calculate nights (FIX)
+    // -------------------------
+    const checkInDate = new Date(check_in);
+    const checkOutDate = new Date(check_out);
 
-    // Helper to sanitize filenames
-    const sanitizeFileName = (file: File) =>
-      `${Date.now()}-${file.name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9.\-_]/g, "")}`;
+    const nights = Math.max(
+      1,
+      Math.ceil(
+        (checkOutDate.getTime() - checkInDate.getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    );
 
-    if (idFile) {
-      const buffer = Buffer.from(await idFile.arrayBuffer());
-      const filePath = `ids/${sanitizeFileName(idFile)}`;
+    // -------------------------
+    // Upload ID proof (PRIVATE BUCKET)
+    // -------------------------
+    const fileExt = idFile.name.split(".").pop();
+    const filePath = `ids/${Date.now()}-${phone}.${fileExt}`;
 
-      const { error } = await supabase.storage
-        .from("booking-documents")
-        .upload(filePath, buffer, {
-          contentType: idFile.type,
-        });
+    const { error: uploadError } = await supabase.storage
+      .from("booking-documents")
+      .upload(filePath, idFile, {
+        upsert: false,
+        contentType: idFile.type,
+      });
 
-      if (error) {
-        console.error("ID upload failed:", error);
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-
-      idProofPath = filePath;
+    if (uploadError) {
+      console.error("Upload error:", uploadError);
+      return NextResponse.json(
+        { error: "Failed to upload ID proof" },
+        { status: 500 }
+      );
     }
 
-    if (paymentMode !== "Cash" && paymentFile) {
-      const buffer = Buffer.from(await paymentFile.arrayBuffer());
-      const filePath = `payments/${sanitizeFileName(paymentFile)}`;
-
-      const { error } = await supabase.storage
-        .from("booking-documents")
-        .upload(filePath, buffer, {
-          contentType: paymentFile.type,
-        });
-
-      if (error) {
-        console.error("Payment upload failed:", error);
-        return NextResponse.json({ error: error.message }, { status: 400 });
-      }
-
-      paymentProofPath = filePath;
-    }
-
-    // -----------------------------
-    // 3. Insert booking in DB
-    // -----------------------------
+    // -------------------------
+    // Insert booking
+    // -------------------------
     const { error: insertError } = await supabase
       .from("confirmed_bookings")
       .insert({
@@ -96,32 +92,29 @@ export async function POST(req: Request) {
         phone,
         guests,
         occasion,
-        check_in: checkIn,
-        check_out: checkOut,
-        total_amount: totalAmount,
-        amount_paid: amountPaid,
-        payment_mode: paymentMode,
-        id_proof_type: idProofType,
-        id_proof_path: idProofPath,
-        payment_proof_path: paymentProofPath,
+        check_in,
+        check_out,
+        nights,
+        total_amount,
+        amount_paid,
+        payment_mode,
+        id_proof_type,
+        id_proof_path: filePath,
       });
 
     if (insertError) {
-      console.error("DB insert failed:", insertError);
+      console.error("Insert error:", insertError);
       return NextResponse.json(
         { error: insertError.message },
         { status: 500 }
       );
     }
 
-    // -----------------------------
-    // 4. Success
-    // -----------------------------
-    return NextResponse.json({ ok: true });
-  } catch (err: any) {
-    console.error("Confirm booking error:", err);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Unexpected error:", err);
     return NextResponse.json(
-      { error: "Server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
