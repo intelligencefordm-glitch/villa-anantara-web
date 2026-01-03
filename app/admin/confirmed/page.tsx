@@ -39,6 +39,7 @@ export default function ConfirmedBookingsPage() {
 
     setPassword(passwordInput);
     setAuthed(true);
+    setError("");
     setPasswordInput("");
   }
 
@@ -49,9 +50,7 @@ export default function ConfirmedBookingsPage() {
       setError("");
 
       const res = await fetch("/api/admin/confirmed/list", {
-        headers: {
-          "x-admin-password": password,
-        },
+        headers: { "x-admin-password": password },
       });
 
       const json = await res.json();
@@ -66,43 +65,26 @@ export default function ConfirmedBookingsPage() {
   }
 
   useEffect(() => {
-    if (authed) loadBookings();
-  }, [authed]);
+    if (!authed || !password) return;
+    loadBookings();
+  }, [authed, password]);
 
-  // ---------------- VIEW / DOWNLOAD FILE ----------------
-  async function openDocument(path: string, download = false) {
+  // ---------------- VIEW / DOWNLOAD DOCUMENT ----------------
+  async function openDocument(path?: string | null) {
+    if (!path) return;
+
     const res = await fetch("/api/admin/document", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-password": password,
-      },
-      body: JSON.stringify({ path, download }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path }),
     });
 
     const json = await res.json();
-    if (!json.url) {
+    if (json.url) {
+      window.open(json.url, "_blank");
+    } else {
       alert("Failed to open document");
-      return;
     }
-
-    window.open(json.url, "_blank");
-  }
-
-  // ---------------- DELETE ----------------
-  async function deleteBooking(id: number) {
-    if (!confirm("Delete this booking?")) return;
-
-    await fetch("/api/admin/confirmed/delete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-password": password,
-      },
-      body: JSON.stringify({ id }),
-    });
-
-    loadBookings();
   }
 
   // ---------------- LOGIN UI ----------------
@@ -123,10 +105,7 @@ export default function ConfirmedBookingsPage() {
               className="w-full border p-2 rounded"
             />
 
-            <button
-              type="submit"
-              className="w-full bg-black text-white py-2 rounded"
-            >
+            <button className="w-full bg-black text-white py-2 rounded">
               Login
             </button>
           </form>
@@ -153,73 +132,49 @@ export default function ConfirmedBookingsPage() {
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
 
-      {loading && <p className="mb-3">Loading...</p>}
+      {loading && <p>Loading...</p>}
 
-      <div className="bg-white p-6 rounded shadow">
-        <ul className="space-y-4">
-          {bookings.map((b) => (
-            <li key={b.id} className="border p-4 rounded">
-              <p className="font-semibold">{b.name}</p>
-              <p className="text-sm">
-                {format(new Date(b.check_in), "dd MMM")} →{" "}
-                {format(new Date(b.check_out), "dd MMM")}
-              </p>
-              <p className="text-sm">
-                ₹{b.amount_paid} / ₹{b.total_amount} • Due ₹{b.amount_due}
-              </p>
+      {!loading && bookings.length === 0 && (
+        <p className="bg-white p-4 rounded">No bookings found.</p>
+      )}
 
-              <div className="flex flex-wrap gap-3 mt-3 text-sm">
-                {b.id_proof_path && (
-                  <>
-                    <button
-                      onClick={() => openDocument(b.id_proof_path)}
-                      className="text-blue-700 font-semibold"
-                    >
-                      View ID Proof
-                    </button>
-                    <button
-                      onClick={() => openDocument(b.id_proof_path, true)}
-                      className="text-blue-500 underline"
-                    >
-                      Download ID
-                    </button>
-                  </>
-                )}
+      <ul className="space-y-4">
+        {bookings.map((b) => (
+          <li key={b.id} className="bg-white p-5 rounded shadow">
+            <p className="font-semibold text-lg">{b.name}</p>
+            <p className="text-sm">{b.phone}</p>
 
-                {b.payment_proof_path && (
-                  <>
-                    <button
-                      onClick={() => openDocument(b.payment_proof_path)}
-                      className="text-green-700 font-semibold"
-                    >
-                      View Payment Proof
-                    </button>
-                    <button
-                      onClick={() =>
-                        openDocument(b.payment_proof_path, true)
-                      }
-                      className="text-green-500 underline"
-                    >
-                      Download Payment
-                    </button>
-                  </>
-                )}
+            <p className="text-sm mt-1">
+              {format(new Date(b.check_in), "dd MMM yyyy")} →{" "}
+              {format(new Date(b.check_out), "dd MMM yyyy")}
+            </p>
 
+            <p className="text-sm mt-1">
+              ₹{b.amount_paid} / ₹{b.total_amount} • Due ₹{b.amount_due}
+            </p>
+
+            <div className="flex flex-wrap gap-4 mt-4 text-sm">
+              {b.id_proof_path && (
                 <button
-                  onClick={() => deleteBooking(b.id)}
-                  className="text-red-600 font-semibold"
+                  onClick={() => openDocument(b.id_proof_path)}
+                  className="text-blue-700 font-semibold"
                 >
-                  Delete
+                  View / Download ID Proof
                 </button>
-              </div>
-            </li>
-          ))}
+              )}
 
-          {bookings.length === 0 && (
-            <p className="text-sm text-gray-500">No bookings found.</p>
-          )}
-        </ul>
-      </div>
+              {b.payment_proof_path && (
+                <button
+                  onClick={() => openDocument(b.payment_proof_path)}
+                  className="text-green-700 font-semibold"
+                >
+                  View / Download Payment Proof
+                </button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }
