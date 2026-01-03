@@ -8,11 +8,11 @@ export default function ConfirmBookingPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [guests, setGuests] = useState("");
-  const [occasion, setOccasion] = useState("Stay");
+  const [purpose, setPurpose] = useState("Stay");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
-  const [amountPaid, setAmountPaid] = useState("");
+  const [advanceAmount, setAdvanceAmount] = useState("");
   const [paymentMode, setPaymentMode] = useState("");
   const [idProofType, setIdProofType] = useState("");
 
@@ -28,6 +28,11 @@ export default function ConfirmBookingPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!agree) {
+      setError("Please accept the Terms & Conditions.");
+      return;
+    }
 
     if (
       !name ||
@@ -49,20 +54,15 @@ export default function ConfirmBookingPage() {
       return;
     }
 
-    if (!agree) {
-      setError("Please accept Terms & Conditions.");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("name", name);
     formData.append("phone", phone);
     formData.append("guests", guests);
-    formData.append("occasion", occasion);
+    formData.append("purpose", purpose);
     formData.append("check_in", checkIn);
     formData.append("check_out", checkOut);
     formData.append("total_amount", totalAmount);
-    formData.append("amount_paid", amountPaid || "0");
+    formData.append("advance_amount", advanceAmount || "0");
     formData.append("payment_mode", paymentMode);
     formData.append("id_proof_type", idProofType);
     formData.append("id_proof", idFile);
@@ -79,20 +79,22 @@ export default function ConfirmBookingPage() {
         body: formData,
       });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(text);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text);
+      }
 
       setSuccess("Booking submitted successfully!");
 
-      // reset form
+      // Reset form
       setName("");
       setPhone("");
       setGuests("");
-      setOccasion("Stay");
+      setPurpose("Stay");
       setCheckIn("");
       setCheckOut("");
       setTotalAmount("");
-      setAmountPaid("");
+      setAdvanceAmount("");
       setPaymentMode("");
       setIdProofType("");
       setIdFile(null);
@@ -141,8 +143,8 @@ export default function ConfirmBookingPage() {
 
         <select
           className="w-full border p-3 mb-3 rounded"
-          value={occasion}
-          onChange={(e) => setOccasion(e.target.value)}
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
         >
           <option value="Stay">Stay</option>
           <option value="Other">Other</option>
@@ -173,9 +175,9 @@ export default function ConfirmBookingPage() {
 
         <input
           className="w-full border p-3 mb-3 rounded"
-          placeholder="Amount Paid"
-          value={amountPaid}
-          onChange={(e) => setAmountPaid(e.target.value)}
+          placeholder="Advance Paid"
+          value={advanceAmount}
+          onChange={(e) => setAdvanceAmount(e.target.value)}
         />
 
         <select
@@ -196,7 +198,9 @@ export default function ConfirmBookingPage() {
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => setPaymentFile(e.target.files?.[0] || null)}
+              onChange={(e) =>
+                setPaymentFile(e.target.files?.[0] || null)
+              }
             />
           </div>
         )}
@@ -243,8 +247,10 @@ export default function ConfirmBookingPage() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded text-white font-semibold"
+          disabled={!agree || loading}
+          className={`w-full py-3 rounded text-white font-semibold ${
+            !agree || loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           style={{ backgroundColor: MOCHA }}
         >
           {loading ? "Submitting..." : "Confirm Booking"}
