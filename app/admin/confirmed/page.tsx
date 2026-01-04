@@ -81,7 +81,7 @@ export default function ConfirmedBookingsPage() {
 
     const json = await res.json();
     if (json.url) {
-      window.open(json.url, "_blank");
+      window.location.href = json.url;
     } else {
       alert("Failed to open document");
     }
