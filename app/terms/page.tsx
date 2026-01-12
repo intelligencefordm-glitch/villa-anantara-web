@@ -101,10 +101,10 @@ export default function TermsPage() {
         <section>
           <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">8. Food & Breakfast Policy</h2>
           <ul className="list-disc ml-6 space-y-2">
-            <li>Breakfast cook included.</li>
             <li>Groceries must be provided by the guest.</li>
-            <li>Additional meals from menu are chargeable.</li>
+            <li>We also provide an additional kitchen for bigger gathering at additional cost</li>
             <li>Kitchen use allowed responsibly.</li>
+            <li>Breakfast is not included.</li>
           </ul>
         </section>
 
@@ -113,8 +113,7 @@ export default function TermsPage() {
           <ul className="list-disc ml-6 space-y-2">
             <li>Extra beds</li>
             <li>Guests above 15 persons</li>
-            <li>Early/late check-in</li>
-            <li>Special requests</li>
+            <li>Use of Special kitchen</li>
             <li>Excessive cleaning</li>
           </ul>
         </section>
