@@ -1,16 +1,15 @@
 "use client";
+
 import React from "react";
 
 export default function PrivacyPolicyPage() {
   return (
     <main className="min-h-screen px-6 py-24 max-w-4xl mx-auto">
-      
       <h1 className="text-4xl font-bold text-[#0F1F0F] mb-6">
         Privacy Center
       </h1>
 
       <div className="space-y-8 text-[#333] leading-relaxed font-poppins">
-
         {/* Section 1 */}
         <section>
           <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
@@ -21,10 +20,10 @@ export default function PrivacyPolicyPage() {
             guest security, including:
           </p>
           <ul className="list-disc ml-6 space-y-2">
-            <li>Name & contact details</li>
+            <li>Name &amp; contact details</li>
             <li>Government ID proof</li>
             <li>Payment details (we do NOT store sensitive banking data)</li>
-            <li>Number of guests & stay details</li>
+            <li>Number of guests &amp; stay details</li>
           </ul>
         </section>
 
@@ -47,9 +46,11 @@ export default function PrivacyPolicyPage() {
             3. CCTV Monitoring
           </h2>
           <p>
-            CCTV cameras are installed in <strong>outdoor public areas</strong> for
-            safety and security. Cameras are <strong>NOT placed inside private indoor spaces</strong>.
-            By entering the property, guests consent to being recorded in monitored zones.
+            CCTV cameras are installed in <strong>outdoor public areas</strong>{" "}
+            for safety and security. Cameras are{" "}
+            <strong>NOT placed inside private indoor spaces</strong>. By
+            entering the property, guests consent to being recorded in monitored
+            zones.
           </p>
         </section>
 
@@ -59,9 +60,9 @@ export default function PrivacyPolicyPage() {
             4. Payment Security
           </h2>
           <p>
-            Payments made through UPI, bank transfer, or digital modes are processed 
-            securely. We do not store sensitive payment information such as card
-            numbers or banking credentials.
+            Payments made through UPI, bank transfer, or digital modes are
+            processed securely. We do not store sensitive payment information
+            such as card numbers or banking credentials.
           </p>
         </section>
 
@@ -100,12 +101,13 @@ export default function PrivacyPolicyPage() {
             For any privacy-related questions or concerns, please contact:
           </p>
           <p className="mt-2">
-            📞 <strong>+91 8889777288</strong><br />
-            📧 <strong>villaanantara@gmail.com</strong><br />
-            📍 Villa Anantara, Raipur
+            📞 <strong>+91 8889777288</strong>
+            <br />
+            📧 <strong>villaanantara@gmail.com</strong>
+            <br />
+            📍 Villa Anant, Raipur
           </p>
         </section>
-
       </div>
     </main>
   );
