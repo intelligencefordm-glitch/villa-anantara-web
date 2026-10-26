@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from “next/server”;
 import { createClient } from “@supabase/supabase-js”;
 
-const ALLOWED_STATUSES = [
-“New Inquiry”,
-“Currently Talking”,
-“Rejected”,
-];
-
 export async function POST(request: NextRequest) {
 try {
-// Verify admin password.
+// Verify admin authentication.
 const adminPassword = request.headers.get(“x-admin-password”);
 
 if (
@@ -22,7 +16,7 @@ if (
     { status: 401 }
   );
 }
-// Initialize Supabase on the server.
+// Initialize Supabase.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
@@ -66,21 +60,15 @@ if (
     { status: 400 }
   );
 }
-if (checkOut <= checkIn) {
-  return NextResponse.json(
-    { error: "Check-out must be after check-in." },
-    { status: 400 }
-  );
-}
-// Validate dates and calculate the number of nights.
 const startDate = new Date(`${checkIn}T00:00:00Z`);
 const endDate = new Date(`${checkOut}T00:00:00Z`);
 if (
   Number.isNaN(startDate.getTime()) ||
-  Number.isNaN(endDate.getTime())
+  Number.isNaN(endDate.getTime()) ||
+  endDate <= startDate
 ) {
   return NextResponse.json(
-    { error: "Invalid check-in or check-out date." },
+    { error: "Please provide valid check-in and check-out dates." },
     { status: 400 }
   );
 }
@@ -93,26 +81,6 @@ if (calculatedNights !== nights) {
     { status: 400 }
   );
 }
-const { data: existingInquiry, error: findError } = await supabase
-  .from("inquiries")
-  .select("id")
-  .eq("id", id)
-  .maybeSingle();
-if (findError) {
-  console.error("Inquiry lookup failed:", findError);
-  return NextResponse.json(
-    { error: "Could not verify the inquiry." },
-    { status: 500 }
-  );
-}
-if (!existingInquiry) {
-  return NextResponse.json(
-    { error: "Inquiry not found." },
-    { status: 404 }
-  );
-}
-// Update inquiry details. Do not change the status here.
-// The status dropdown will use the update-status endpoint.
 const updateData: Record<string, string | number> = {
   name,
   phone,
@@ -130,15 +98,18 @@ const { data, error } = await supabase
   .update(updateData)
   .eq("id", id)
   .select()
-  .single();
+  .maybeSingle();
 if (error) {
   console.error("Inquiry update failed:", error);
   return NextResponse.json(
-    {
-      error:
-        "Could not update the inquiry. Check that the database columns match the submitted fields.",
-    },
+    { error: "Could not update the inquiry. Check your database columns." },
     { status: 500 }
+  );
+}
+if (!data) {
+  return NextResponse.json(
+    { error: "Inquiry not found." },
+    { status: 404 }
   );
 }
 return NextResponse.json(
