@@ -22,10 +22,15 @@ export default function CookieConsent() {
   return (
     <div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 p-4 rounded-lg shadow-lg flex flex-col md:flex-row items-center gap-3"
-      style={{ backgroundColor: "#C29F80", color: "white", width: "90%", maxWidth: "500px" }}
+      style={{
+        backgroundColor: "#C29F80",
+        color: "white",
+        width: "90%",
+        maxWidth: "500px",
+      }}
     >
       <p className="text-center md:text-left">
-        We use cookies to improve your experience at Villa Anantara.
+        We use cookies to improve your experience at Villa Anant.
       </p>
 
       <button
