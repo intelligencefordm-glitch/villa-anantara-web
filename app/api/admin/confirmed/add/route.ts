@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    // 3. Read and validate booking details
+    // 3. Read booking details
     const body = await req.json();
     const name = String(body.name ?? "").trim();
     const phone = String(body.phone ?? "").trim();
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     const totalAmount = Number(body.total_amount);
     const amountPaid = Number(body.amount_paid);
     const occasion = String(body.occasion ?? "").trim();
+    // 4. Validate required fields and amounts
     if (
       !name ||
       !phone ||
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    // 4. Validate dates
+    // 5. Validate calendar dates
     const startDate = new Date(`${checkIn}T00:00:00Z`);
     const endDate = new Date(`${checkOut}T00:00:00Z`);
     if (
@@ -63,16 +64,18 @@ export async function POST(req: NextRequest) {
       endDate <= startDate
     ) {
       return NextResponse.json(
-        { error: "Check-out must be after check-in. Please check your dates." },
+        {
+          error: "Check-out must be after check-in. Please check your dates.",
+        },
         { status: 400 }
       );
     }
     const nights = Math.round(
       (endDate.getTime() - startDate.getTime()) / 86400000
     );
-    // 5. Connect to Supabase
+    // 6. Connect to Supabase
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    // 6. Check blocked dates
+    // 7. Check blocked dates
     const { data: blockedDates, error: blockedError } = await supabase
       .from("blocked_dates")
       .select("date")
@@ -82,7 +85,7 @@ export async function POST(req: NextRequest) {
       console.error("Blocked date lookup failed:", blockedError);
       return NextResponse.json(
         {
-          error: "Could not verify date availability.",
+          error: blockedError.message,
           code: blockedError.code,
           details: blockedError.details,
           hint: blockedError.hint,
@@ -96,7 +99,7 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-    // 7. Check for overlapping confirmed bookings
+    // 8. Check for overlapping confirmed bookings
     const { data: overlaps, error: overlapError } = await supabase
       .from("confirmed_bookings")
       .select("id")
@@ -106,7 +109,7 @@ export async function POST(req: NextRequest) {
       console.error("Booking overlap check failed:", overlapError);
       return NextResponse.json(
         {
-          error: "Could not verify existing bookings.",
+          error: overlapError.message,
           code: overlapError.code,
           details: overlapError.details,
           hint: overlapError.hint,
@@ -123,7 +126,9 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-    // 8. Prepare booking data
+    // 9. Prepare booking data.
+    // amount_due is intentionally omitted because Supabase
+    // does not allow the API to insert a value into that column.
     const booking = {
       name,
       phone,
@@ -133,10 +138,9 @@ export async function POST(req: NextRequest) {
       check_out: checkOut,
       total_amount: totalAmount,
       amount_paid: amountPaid,
-      amount_due: totalAmount - amountPaid,
       nights,
     };
-    // 9. Insert booking into Supabase
+    // 10. Save booking
     const { data, error } = await supabase
       .from("confirmed_bookings")
       .insert([booking])
@@ -144,7 +148,6 @@ export async function POST(req: NextRequest) {
       .single();
     if (error) {
       console.error("Confirmed booking creation failed:", error);
-      // Return the actual database error to help diagnose the problem.
       return NextResponse.json(
         {
           error: error.message,
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    // 10. Return successful response
+    // 11. Return successful response
     return NextResponse.json(
       {
         success: true,
@@ -166,7 +169,9 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Add confirmed booking error:", error);
     return NextResponse.json(
-      { error: "An unexpected error occurred while adding the booking." },
+      {
+        error: "An unexpected error occurred while adding the booking.",
+      },
       { status: 500 }
     );
   }
