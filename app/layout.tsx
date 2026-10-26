@@ -2,6 +2,7 @@ import "./globals.css";
 import localFont from "next/font/local";
 import { Poppins } from "next/font/google";
 import React from "react";
+import type { Metadata } from "next";
 import CookieConsent from "./components/CookieConsent";
 
 // FUTURA
@@ -29,9 +30,29 @@ const abigail = localFont({
   display: "swap",
 });
 
-export const metadata = {
-  title: "Villa Anantara",
-  description: "Luxury private villa in Raipur — Villa Anantara.",
+// WEBSITE METADATA
+export const metadata: Metadata = {
+  metadataBase: new URL("https://villaanant.in"),
+  title: {
+    default: "Villa Anant | Luxury Private Villa in Raipur",
+    template: "%s | Villa Anant",
+  },
+  description:
+    "Discover Villa Anant, a private luxury villa in Raipur, perfect for relaxing stays, celebrations, and special occasions.",
+  applicationName: "Villa Anant",
+  openGraph: {
+    title: "Villa Anant | Luxury Private Villa in Raipur",
+    description:
+      "Experience privacy, comfort, and a peaceful farmhouse retreat at Villa Anant in Raipur.",
+    url: "https://villaanant.in",
+    siteName: "Villa Anant",
+    locale: "en_IN",
+    type: "website",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
