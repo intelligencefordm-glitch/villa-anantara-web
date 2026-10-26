@@ -6,7 +6,7 @@ export default function FloatingWhatsApp() {
 
   // Pre-filled message
   const message = encodeURIComponent(
-    "Hi, I’m interested in Villa Anantara. I would like to know more about it"
+    "Hi, I’m interested in Villa Anant. I would like to know more about it"
   );
 
   return (
