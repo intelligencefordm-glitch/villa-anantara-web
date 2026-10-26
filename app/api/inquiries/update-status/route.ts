@@ -1,17 +1,17 @@
-import { NextRequest, NextResponse } from “next/server”;
-import { createClient } from “@supabase/supabase-js”;
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 const ALLOWED_STATUSES = [
-“New Inquiry”,
-“Currently Talking”,
-“Rejected”,
+"New Inquiry",
+"Currently Talking",
+"Rejected",
 ] as const;
 
 type InquiryStatus = (typeof ALLOWED_STATUSES)[number];
 
 export async function POST(request: NextRequest) {
 try {
-const adminPassword = request.headers.get(“x-admin-password”);
+const adminPassword = request.headers.get("x-admin-password");
 
 if (
   !process.env.ADMIN_PASSWORD ||
@@ -82,7 +82,7 @@ return NextResponse.json(
 );
 
 } catch (error) {
-console.error(“Update inquiry status error:”, error);
+console.error("Update inquiry status error:", error);
 
 return NextResponse.json(
   { error: "An unexpected error occurred while updating the status." },
