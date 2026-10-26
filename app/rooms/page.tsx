@@ -54,28 +54,37 @@ const rooms: Room[] = [
 
 export default function RoomsPage() {
   return (
-    <main className="min-h-screen p-6 relative" style={{ background: "#EFE5D5" }}>
+    <main
+      className="min-h-screen p-6 relative"
+      style={{ background: "#EFE5D5" }}
+    >
       {/* Back Button */}
       <button
         onClick={() => window.history.back()}
-        className="mb-4 px-4 py-2 bg-black text-white rounded"
+        className="mb-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
+        aria-label="Go back to the previous page"
       >
         ← Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">Our Rooms</h1>
+      {/* Page Heading */}
+      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">
+        Our Rooms
+      </h1>
 
+      {/* Room Cards */}
       <div className="space-y-10">
-        {rooms.map((room, index) => (
-          <RoomCard key={index} room={room} />
+        {rooms.map((room) => (
+          <RoomCard key={room.name} room={room} />
         ))}
       </div>
 
-      {/* ⭐ Floating Book Now Button */}
+      {/* Floating Book Now Button */}
       <button
         onClick={() => (window.location.href = "/check")}
-        className="fixed bottom-6 right-6 bg-black text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold hover:bg-gray-900 transition-all"
+        className="fixed bottom-6 right-6 bg-[#0F1F0F] text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold hover:bg-gray-900 hover:scale-105 transition-all"
         style={{ zIndex: 999 }}
+        aria-label="Check availability and book Villa Anant"
       >
         Book Now
       </button>
@@ -87,59 +96,74 @@ function RoomCard({ room }: { room: Room }) {
   const [i, setI] = useState(0);
   const total = room.images.length;
 
-  const prev = () => setI((prev) => (prev - 1 + total) % total);
-  const next = () => setI((prev) => (prev + 1) % total);
+  const prev = () => {
+    setI((current) => (current - 1 + total) % total);
+  };
 
-  // Auto-slide every 4 seconds
+  const next = () => {
+    setI((current) => (current + 1) % total);
+  };
+
+  // Automatically advance the slideshow every 4 seconds.
   useEffect(() => {
     const timer = setInterval(() => {
-      setI((prev) => (prev + 1) % total);
+      setI((current) => (current + 1) % total);
     }, 4000);
+
     return () => clearInterval(timer);
   }, [total]);
 
   return (
     <section className="bg-white rounded-xl shadow overflow-hidden">
-      {/* Header */}
+      {/* Room Header */}
       <div
         className="p-5 border-b"
         style={{ backgroundColor: MOCHA, color: "white" }}
       >
         <h2 className="text-2xl font-semibold">{room.name}</h2>
+
         <p className="opacity-90 mt-1">{room.description}</p>
       </div>
 
+      {/* Room Images */}
       <div className="p-5 grid md:grid-cols-2 gap-6 items-center">
-        {/* Image Slider */}
         <div className="relative w-full h-72 md:h-96 rounded-lg overflow-hidden bg-black/10">
-          {/* Prev Button */}
+          {/* Previous Image */}
           <button
+            type="button"
             onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl"
+            aria-label={`Previous image of ${room.name}`}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl hover:bg-black/70 transition"
           >
             ‹
           </button>
 
           <img
             src={room.images[i]}
-            alt={`${room.name} photo ${i + 1}`}
+            alt={`${room.name} — image ${i + 1} of ${total}`}
             className="w-full h-full object-cover"
           />
 
-          {/* Next Button */}
+          {/* Next Image */}
           <button
+            type="button"
             onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl"
+            aria-label={`Next image of ${room.name}`}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl hover:bg-black/70 transition"
           >
             ›
           </button>
 
-          {/* Dots */}
+          {/* Slideshow Indicators */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
             {room.images.map((_, idx) => (
-              <span
+              <button
                 key={idx}
-                className={`w-2.5 h-2.5 rounded-full ${
+                type="button"
+                onClick={() => setI(idx)}
+                aria-label={`Show image ${idx + 1} of ${room.name}`}
+                aria-current={idx === i ? "true" : undefined}
+                className={`w-2.5 h-2.5 rounded-full transition ${
                   idx === i ? "bg-white" : "bg-white/40"
                 }`}
               />
