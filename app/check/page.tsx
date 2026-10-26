@@ -3,7 +3,12 @@
 import React, { useRef, useState } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
+import {
+  addDays,
+  differenceInCalendarDays,
+  format,
+  startOfDay,
+} from "date-fns";
 
 const MOCHA = "#C29F80";
 const WHATSAPP_NUMBER = "918889777288";
@@ -37,19 +42,16 @@ export default function CheckAvailabilityPage() {
       return;
     }
 
-    // Do not allow check-in dates in the past.
     if (startOfDay(value.from) < startOfDay(new Date())) {
       setErrorMsg("Please select today or a future check-in date.");
       return;
     }
 
-    // If only check-in is selected, wait for check-out.
     if (!value.to) {
       setRange(value);
       return;
     }
 
-    // Ensure check-out is at least one night after check-in.
     if (differenceInCalendarDays(value.to, value.from) < 1) {
       value = { from: value.from, to: addDays(value.from, 1) };
     }
@@ -78,6 +80,16 @@ export default function CheckAvailabilityPage() {
 
     if (!range?.from || !range?.to) {
       setErrorMsg("Please select your check-in and check-out dates.");
+      return;
+    }
+
+    if (startOfDay(range.from) < startOfDay(new Date())) {
+      setErrorMsg("Please select today or a future check-in date.");
+      return;
+    }
+
+    if (differenceInCalendarDays(range.to, range.from) < 1) {
+      setErrorMsg("Check-out must be at least one night after check-in.");
       return;
     }
 
@@ -155,7 +167,6 @@ export default function CheckAvailabilityPage() {
           `Nights: ${payload.nights}`
       );
 
-      // Open WhatsApp after the inquiry has been saved.
       window.location.href =
         `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${message}`;
     } catch (error) {
@@ -171,10 +182,7 @@ export default function CheckAvailabilityPage() {
   };
 
   return (
-    <main
-      className="min-h-screen p-6"
-      style={{ background: "#EFE5D5" }}
-    >
+    <main className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
       <div className="max-w-4xl mx-auto">
         <button
           type="button"
@@ -189,8 +197,8 @@ export default function CheckAvailabilityPage() {
         </h1>
 
         <p className="mb-6 text-[#4a4a4a]">
-          Choose your stay dates and share your details to inquire about
-          Villa Anant.
+          Choose your preferred stay dates and share your details to inquire
+          about Villa Anant. We will contact you to confirm your reservation.
         </p>
 
         {getCalendarText() && (
@@ -205,18 +213,8 @@ export default function CheckAvailabilityPage() {
             selected={range}
             onSelect={handleSelect}
             disabled={{ before: startOfDay(new Date()) }}
-            modifiersClassNames={{
-              selected: "custom-selected",
-            }}
           />
         </div>
-
-        <style jsx global>{`
-          .custom-selected {
-            background-color: ${MOCHA} !important;
-            color: white !important;
-          }
-        `}</style>
 
         <button
           type="button"
@@ -245,10 +243,11 @@ export default function CheckAvailabilityPage() {
               Guest Details
             </h2>
 
-            <label className="block text-white text-sm mb-1">
+            <label className="block text-white text-sm mb-1" htmlFor="guest-name">
               Full name *
             </label>
             <input
+              id="guest-name"
               type="text"
               autoComplete="name"
               required
@@ -259,10 +258,11 @@ export default function CheckAvailabilityPage() {
               onChange={(event) => setName(event.target.value)}
             />
 
-            <label className="block text-white text-sm mb-1">
+            <label className="block text-white text-sm mb-1" htmlFor="guest-phone">
               Phone *
             </label>
             <input
+              id="guest-phone"
               type="tel"
               autoComplete="tel"
               required
@@ -273,10 +273,11 @@ export default function CheckAvailabilityPage() {
               onChange={(event) => setPhone(event.target.value)}
             />
 
-            <label className="block text-white text-sm mb-1">
+            <label className="block text-white text-sm mb-1" htmlFor="guest-email">
               Email (optional)
             </label>
             <input
+              id="guest-email"
               type="email"
               autoComplete="email"
               maxLength={254}
@@ -286,10 +287,11 @@ export default function CheckAvailabilityPage() {
               onChange={(event) => setEmail(event.target.value)}
             />
 
-            <label className="block text-white text-sm mb-1">
+            <label className="block text-white text-sm mb-1" htmlFor="guest-count">
               Number of guests *
             </label>
             <input
+              id="guest-count"
               type="number"
               min={1}
               max={15}
@@ -305,10 +307,11 @@ export default function CheckAvailabilityPage() {
               }
             />
 
-            <label className="block text-white text-sm mb-1">
+            <label className="block text-white text-sm mb-1" htmlFor="guest-occasion">
               Occasion
             </label>
             <select
+              id="guest-occasion"
               className="w-full p-3 mb-3 rounded bg-white"
               value={occasion}
               onChange={(event) => setOccasion(event.target.value)}
@@ -321,10 +324,7 @@ export default function CheckAvailabilityPage() {
               Selected stay: {format(range.from, "dd MMM yyyy")} –{" "}
               {format(range.to, "dd MMM yyyy")} (
               {differenceInCalendarDays(range.to, range.from)} night
-              {differenceInCalendarDays(range.to, range.from) === 1
-                ? ""
-                : "s"}
-              )
+              {differenceInCalendarDays(range.to, range.from) === 1 ? "" : "s"})
             </p>
 
             <button
