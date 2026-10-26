@@ -1,46 +1,79 @@
-// app/api/inquiries/delete/route.ts
-import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from “next/server”;
+import { createClient } from “@supabase/supabase-js”;
 
-export const dynamic = "force-dynamic";
+export async function POST(request: NextRequest) {
+try {
+// 1. Verify admin authentication.
+const adminPassword = request.headers.get(“x-admin-password”);
 
-export async function POST(req: Request) {
-  try {
-    const pass = req.headers.get("x-admin-password") || "";
-    const adminPass = process.env.ADMIN_PASSWORD;
+if (
+  !process.env.ADMIN_PASSWORD ||
+  !adminPassword ||
+  adminPassword !== process.env.ADMIN_PASSWORD
+) {
+  return NextResponse.json(
+    { error: "Unauthorized. Please log in again." },
+    { status: 401 }
+  );
+}
+// 2. Initialize Supabase.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!supabaseUrl || !serviceRoleKey) {
+  return NextResponse.json(
+    { error: "Server database configuration is missing." },
+    { status: 500 }
+  );
+}
+const supabase = createClient(supabaseUrl, serviceRoleKey);
+// 3. Read and validate the inquiry ID.
+const body = await request.json();
+const id = body.id;
+if (
+  (typeof id !== "string" && typeof id !== "number") ||
+  String(id).trim() === ""
+) {
+  return NextResponse.json(
+    { error: "A valid inquiry ID is required." },
+    { status: 400 }
+  );
+}
+// 4. Delete the selected inquiry.
+const { data, error } = await supabase
+  .from("inquiries")
+  .delete()
+  .eq("id", id)
+  .select("id");
+if (error) {
+  console.error("Inquiry deletion failed:", error);
+  return NextResponse.json(
+    { error: "Could not delete the inquiry." },
+    { status: 500 }
+  );
+}
+if (!data || data.length === 0) {
+  return NextResponse.json(
+    { error: "Inquiry not found." },
+    { status: 404 }
+  );
+}
+// 5. Return success.
+return NextResponse.json(
+  {
+    success: true,
+    message: "Inquiry deleted successfully.",
+    id: data[0].id,
+  },
+  { status: 200 }
+);
 
-    if (!adminPass || pass !== adminPass) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+} catch (error) {
+console.error(“Delete inquiry error:”, error);
 
-    const body = await req.json();
-    const id = body?.id;
+return NextResponse.json(
+  { error: "An unexpected error occurred while deleting the inquiry." },
+  { status: 500 }
+);
 
-    if (!id) {
-      return NextResponse.json(
-        { error: "Missing inquiry id" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
-    const { error } = await supabase
-      .from("inquiries")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("inquiries/delete error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err) {
-    console.error("inquiries/delete fatal:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
-  }
+}
 }
