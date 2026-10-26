@@ -11,7 +11,6 @@ type InquiryStatus = (typeof ALLOWED_STATUSES)[number];
 
 export async function POST(request: NextRequest) {
 try {
-// Verify admin authentication.
 const adminPassword = request.headers.get(“x-admin-password”);
 
 if (
@@ -24,7 +23,6 @@ if (
     { status: 401 }
   );
 }
-// Initialize Supabase.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
