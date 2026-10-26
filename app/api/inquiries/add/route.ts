@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from “next/server”;
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from “@supabase/supabase-js”;
 
 export async function POST(request: NextRequest) {
@@ -124,7 +124,7 @@ return NextResponse.json(
 );
 
 } catch (error) {
-console.error(“Add inquiry error:”, error);
+console.error("Add inquiry error:", error);
 
 return NextResponse.json(
   { error: "Unexpected error while saving the inquiry." },
