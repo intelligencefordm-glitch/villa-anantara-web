@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from “next/server”;
-import { createClient } from “@supabase/supabase-js”;
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
 export async function POST(request: NextRequest) {
 try {
-const adminPassword = request.headers.get(“x-admin-password”);
+const adminPassword = request.headers.get("x-admin-password");
 
 if (
   !process.env.ADMIN_PASSWORD ||
@@ -63,7 +63,7 @@ return NextResponse.json(
 );
 
 } catch (error) {
-console.error(“Delete inquiry error:”, error);
+console.error("Delete inquiry error:", error);
 
 return NextResponse.json(
   { error: "An unexpected error occurred while deleting the inquiry." },
