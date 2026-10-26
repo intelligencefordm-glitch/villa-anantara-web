@@ -3,7 +3,6 @@ import { createClient } from “@supabase/supabase-js”;
 
 export async function POST(request: NextRequest) {
 try {
-// Verify admin authentication.
 const adminPassword = request.headers.get(“x-admin-password”);
 
 if (
@@ -16,7 +15,6 @@ if (
     { status: 401 }
   );
 }
-// Initialize Supabase.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
@@ -60,8 +58,8 @@ if (
     { status: 400 }
   );
 }
-const startDate = new Date(`${checkIn}T00:00:00Z`);
-const endDate = new Date(`${checkOut}T00:00:00Z`);
+const startDate = new Date(checkIn + "T00:00:00Z");
+const endDate = new Date(checkOut + "T00:00:00Z");
 if (
   Number.isNaN(startDate.getTime()) ||
   Number.isNaN(endDate.getTime()) ||
@@ -77,7 +75,7 @@ const calculatedNights = Math.round(
 );
 if (calculatedNights !== nights) {
   return NextResponse.json(
-    { error: "The number of nights does not match the selected dates." },
+    { error: "The number of nights does not match the dates." },
     { status: 400 }
   );
 }
