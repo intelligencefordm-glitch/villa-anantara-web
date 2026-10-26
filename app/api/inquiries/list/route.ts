@@ -3,7 +3,7 @@ import { createClient } from “@supabase/supabase-js”;
 
 export async function GET(request: NextRequest) {
 try {
-// Require the admin password to retrieve inquiries.
+// Verify admin authentication.
 const adminPassword = request.headers.get(“x-admin-password”);
 
 if (
@@ -16,6 +16,7 @@ if (
     { status: 401 }
   );
 }
+// Initialize Supabase.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
@@ -25,6 +26,7 @@ if (!supabaseUrl || !serviceRoleKey) {
   );
 }
 const supabase = createClient(supabaseUrl, serviceRoleKey);
+// Retrieve inquiries, newest first.
 const { data, error } = await supabase
   .from("inquiries")
   .select("*")
