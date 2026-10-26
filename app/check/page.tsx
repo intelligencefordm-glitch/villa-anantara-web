@@ -3,11 +3,12 @@
 import React, { useRef, useState } from "react";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { addDays, differenceInDays, format } from "date-fns";
+import { addDays, differenceInCalendarDays, format, startOfDay } from "date-fns";
+
+const MOCHA = "#C29F80";
+const WHATSAPP_NUMBER = "918889777288";
 
 export default function CheckAvailabilityPage() {
-  const MOCHA = "#C29F80";
-
   const [range, setRange] = useState<DateRange | undefined>();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,29 +22,46 @@ export default function CheckAvailabilityPage() {
 
   const formRef = useRef<HTMLDivElement | null>(null);
 
-  // ⭐ NEW: Calendar Instruction Text Logic
   const getCalendarText = () => {
     if (!range?.from && !range?.to) return "Select Check In Date";
     if (range?.from && !range?.to) return "Select Check Out Date";
     return "";
   };
 
-  const handleSelect = (val: DateRange | undefined) => {
+  const handleSelect = (value: DateRange | undefined) => {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (!val?.from || !val?.to) {
-      setRange(val);
+    if (!value?.from) {
+      setRange(value);
       return;
     }
 
-    if (differenceInDays(val.to, val.from) < 1) {
-      val = { from: val.from, to: addDays(val.from, 1) };
+    // Do not allow check-in dates in the past.
+    if (startOfDay(value.from) < startOfDay(new Date())) {
+      setErrorMsg("Please select today or a future check-in date.");
+      return;
     }
 
-    setRange(val);
+    // If only check-in is selected, wait for check-out.
+    if (!value.to) {
+      setRange(value);
+      return;
+    }
 
-    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 200);
+    // Ensure check-out is at least one night after check-in.
+    if (differenceInCalendarDays(value.to, value.from) < 1) {
+      value = { from: value.from, to: addDays(value.from, 1) };
+    }
+
+    setRange(value);
+
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 200);
   };
 
   const handleResetDates = () => {
@@ -53,163 +71,282 @@ export default function CheckAvailabilityPage() {
   };
 
   const handleSubmit = async () => {
-    if (!range?.from || !range?.to)
-      return setErrorMsg("Please select dates first.");
+    if (saving) return;
 
-    if (!name || !phone)
-      return setErrorMsg("Please fill all required fields.");
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
-    if (guests === "" || Number.isNaN(Number(guests))) {
-      return setErrorMsg("Please enter number of guests.");
+    if (!range?.from || !range?.to) {
+      setErrorMsg("Please select your check-in and check-out dates.");
+      return;
+    }
+
+    if (!name.trim() || !phone.trim()) {
+      setErrorMsg("Please enter your full name and phone number.");
+      return;
+    }
+
+    if (!/^[+\d\s()-]{7,20}$/.test(phone.trim())) {
+      setErrorMsg("Please enter a valid phone number.");
+      return;
+    }
+
+    if (
+      email.trim() &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    ) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+
+    if (
+      guests === "" ||
+      !Number.isInteger(Number(guests)) ||
+      Number(guests) < 1 ||
+      Number(guests) > 15
+    ) {
+      setErrorMsg("Please enter a number of guests between 1 and 15.");
+      return;
     }
 
     const guestsNum = Number(guests);
 
     const payload = {
-      name,
-      phone,
-      email,
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email.trim(),
       guests: guestsNum,
       occasion,
       check_in: format(range.from, "yyyy-MM-dd"),
       check_out: format(range.to, "yyyy-MM-dd"),
-      nights: differenceInDays(range.to, range.from),
+      nights: differenceInCalendarDays(range.to, range.from),
     };
 
     try {
       setSaving(true);
 
-      const res = await fetch("/api/inquiries/add", {
+      const response = await fetch("/api/inquiries/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          typeof result?.error === "string"
+            ? result.error
+            : "Unable to save your inquiry."
+        );
+      }
 
       setSuccessMsg("Inquiry saved. Opening WhatsApp...");
 
-      setTimeout(() => {
-        const message = encodeURIComponent(
-          `Hello! I'd like to inquire about booking Villa Anantara.\n\n` +
-            `Name: ${name}\nPhone: ${phone}\nGuests: ${guestsNum}\nOccasion: ${occasion}\n` +
-            `Check-in: ${payload.check_in}\nCheck-out: ${payload.check_out}\nNights: ${payload.nights}`
-        );
+      const message = encodeURIComponent(
+        `Hello! I'd like to inquire about booking Villa Anant.\n\n` +
+          `Name: ${payload.name}\n` +
+          `Phone: ${payload.phone}\n` +
+          `Email: ${payload.email || "Not provided"}\n` +
+          `Guests: ${guestsNum}\n` +
+          `Occasion: ${occasion}\n` +
+          `Check-in: ${payload.check_in}\n` +
+          `Check-out: ${payload.check_out}\n` +
+          `Nights: ${payload.nights}`
+      );
 
-        window.location.href =
-          `https://api.whatsapp.com/send?phone=918889777288&text=${message}`;
-      }, 800);
-    } catch (err) {
-      console.error(err);
-      setErrorMsg("Failed to save inquiry. Please try again.");
+      // Open WhatsApp after the inquiry has been saved.
+      window.location.href =
+        `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${message}`;
+    } catch (error) {
+      console.error("Failed to save inquiry:", error);
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "Failed to save inquiry. Please try again."
+      );
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
-      <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">Check Availability</h1>
-
-      {/* ⭐ NEW: Calendar Instruction Text */}
-      {getCalendarText() && (
-        <div className="mb-3 text-lg font-medium text-[#0F1F0F]">
-          {getCalendarText()}
-        </div>
-      )}
-
-      <DayPicker
-        mode="range"
-        selected={range}
-        onSelect={handleSelect}
-        modifiersClassNames={{
-          selected: "custom-selected",
-        }}
-      />
-
-      <style jsx global>{`
-        .custom-selected {
-          background-color: ${MOCHA} !important;
-          color: white !important;
-        }
-      `}</style>
-
-      <button
-        onClick={handleResetDates}
-        className="mt-3 mb-2 px-4 py-2 rounded border border-[#0F1F0F]/40 text-sm"
-      >
-        Reset dates
-      </button>
-
-      {errorMsg && (
-        <div className="mt-2 p-3 bg-red-200 text-red-700 rounded">{errorMsg}</div>
-      )}
-
-      {range?.from && range?.to && (
-        <div
-          ref={formRef}
-          className="mt-6 p-6 rounded"
-          style={{ background: MOCHA }}
+    <main
+      className="min-h-screen p-6"
+      style={{ background: "#EFE5D5" }}
+    >
+      <div className="max-w-4xl mx-auto">
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="mb-5 px-4 py-2 rounded border border-[#0F1F0F]/30 text-[#0F1F0F] hover:bg-black/5 transition"
         >
-          <h2 className="text-xl text-white font-semibold mb-4">Guest Details</h2>
+          ← Back
+        </button>
 
-          <input
-            className="w-full p-3 mb-3 rounded"
-            placeholder="Full name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+        <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">
+          Check Availability
+        </h1>
+
+        <p className="mb-6 text-[#4a4a4a]">
+          Choose your stay dates and share your details to inquire about
+          Villa Anant.
+        </p>
+
+        {getCalendarText() && (
+          <div className="mb-3 text-lg font-medium text-[#0F1F0F]">
+            {getCalendarText()}
+          </div>
+        )}
+
+        <div className="rounded-xl bg-white p-4 md:p-6 shadow-sm overflow-x-auto">
+          <DayPicker
+            mode="range"
+            selected={range}
+            onSelect={handleSelect}
+            disabled={{ before: startOfDay(new Date()) }}
+            modifiersClassNames={{
+              selected: "custom-selected",
+            }}
           />
-
-          <input
-            className="w-full p-3 mb-3 rounded"
-            placeholder="Phone"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-
-          <input
-            className="w-full p-3 mb-3 rounded"
-            placeholder="Email (optional)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <input
-            type="number"
-            min={1}
-            max={15}
-            className="w-full p-3 mb-3 rounded"
-            placeholder="Guests"
-            value={guests}
-            onChange={(e) =>
-              setGuests(e.target.value === "" ? "" : Number(e.target.value))
-            }
-          />
-
-          <select
-            className="w-full p-3 mb-3 rounded"
-            value={occasion}
-            onChange={(e) => setOccasion(e.target.value)}
-          >
-            <option value="Stay">Stay</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <button
-            onClick={handleSubmit}
-            className="w-full p-3 mt-4 bg-black text-white rounded"
-          >
-            {saving ? "Saving..." : "Confirm & Send on WhatsApp"}
-          </button>
-
-          {successMsg && (
-            <div className="mt-4 p-3 bg-green-200 text-green-700 rounded">
-              {successMsg}
-            </div>
-          )}
         </div>
-      )}
-    </div>
+
+        <style jsx global>{`
+          .custom-selected {
+            background-color: ${MOCHA} !important;
+            color: white !important;
+          }
+        `}</style>
+
+        <button
+          type="button"
+          onClick={handleResetDates}
+          className="mt-4 mb-2 px-4 py-2 rounded border border-[#0F1F0F]/40 text-sm text-[#0F1F0F] hover:bg-black/5 transition"
+        >
+          Reset dates
+        </button>
+
+        {errorMsg && (
+          <div
+            role="alert"
+            className="mt-3 p-3 bg-red-100 text-red-800 rounded"
+          >
+            {errorMsg}
+          </div>
+        )}
+
+        {range?.from && range?.to && (
+          <div
+            ref={formRef}
+            className="mt-6 p-6 rounded-xl shadow-sm"
+            style={{ background: MOCHA }}
+          >
+            <h2 className="text-xl text-white font-semibold mb-4">
+              Guest Details
+            </h2>
+
+            <label className="block text-white text-sm mb-1">
+              Full name *
+            </label>
+            <input
+              type="text"
+              autoComplete="name"
+              required
+              maxLength={100}
+              className="w-full p-3 mb-3 rounded"
+              placeholder="Full name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+            />
+
+            <label className="block text-white text-sm mb-1">
+              Phone *
+            </label>
+            <input
+              type="tel"
+              autoComplete="tel"
+              required
+              maxLength={20}
+              className="w-full p-3 mb-3 rounded"
+              placeholder="Phone number"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+            />
+
+            <label className="block text-white text-sm mb-1">
+              Email (optional)
+            </label>
+            <input
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              className="w-full p-3 mb-3 rounded"
+              placeholder="Email address"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+
+            <label className="block text-white text-sm mb-1">
+              Number of guests *
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={15}
+              step={1}
+              required
+              className="w-full p-3 mb-3 rounded"
+              placeholder="Guests (1–15)"
+              value={guests}
+              onChange={(event) =>
+                setGuests(
+                  event.target.value === "" ? "" : Number(event.target.value)
+                )
+              }
+            />
+
+            <label className="block text-white text-sm mb-1">
+              Occasion
+            </label>
+            <select
+              className="w-full p-3 mb-3 rounded bg-white"
+              value={occasion}
+              onChange={(event) => setOccasion(event.target.value)}
+            >
+              <option value="Stay">Stay</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <p className="text-white/90 text-sm mt-2">
+              Selected stay: {format(range.from, "dd MMM yyyy")} –{" "}
+              {format(range.to, "dd MMM yyyy")} (
+              {differenceInCalendarDays(range.to, range.from)} night
+              {differenceInCalendarDays(range.to, range.from) === 1
+                ? ""
+                : "s"}
+              )
+            </p>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={saving}
+              className="w-full p-3 mt-4 bg-[#0F1F0F] text-white rounded font-semibold hover:bg-[#1b321b] transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {saving ? "Saving inquiry..." : "Confirm & Send on WhatsApp"}
+            </button>
+
+            {successMsg && (
+              <div
+                role="status"
+                className="mt-4 p-3 bg-green-100 text-green-800 rounded"
+              >
+                {successMsg}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
