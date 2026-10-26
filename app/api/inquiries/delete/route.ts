@@ -3,7 +3,6 @@ import { createClient } from “@supabase/supabase-js”;
 
 export async function POST(request: NextRequest) {
 try {
-// 1. Verify admin authentication.
 const adminPassword = request.headers.get(“x-admin-password”);
 
 if (
@@ -16,7 +15,6 @@ if (
     { status: 401 }
   );
 }
-// 2. Initialize Supabase.
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !serviceRoleKey) {
@@ -26,7 +24,6 @@ if (!supabaseUrl || !serviceRoleKey) {
   );
 }
 const supabase = createClient(supabaseUrl, serviceRoleKey);
-// 3. Read and validate the inquiry ID.
 const body = await request.json();
 const id = body.id;
 if (
@@ -38,7 +35,6 @@ if (
     { status: 400 }
   );
 }
-// 4. Delete the selected inquiry.
 const { data, error } = await supabase
   .from("inquiries")
   .delete()
@@ -57,7 +53,6 @@ if (!data || data.length === 0) {
     { status: 404 }
   );
 }
-// 5. Return success.
 return NextResponse.json(
   {
     success: true,
