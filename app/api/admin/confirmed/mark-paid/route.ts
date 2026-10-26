@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
+type PaymentMode = "Online" | "Cash" | "Mixed";
 export async function POST(req: NextRequest) {
   try {
     // Verify admin password
@@ -24,26 +25,66 @@ export async function POST(req: NextRequest) {
         { status: 500 }
       );
     }
-    // Validate booking ID
+    // Read request
     const body = await req.json();
     const id = Number(body.id);
+    const paymentMode = body.payment_mode as PaymentMode;
+    const onlinePayment = Number(body.online_amount);
+    const cashPayment = Number(body.cash_amount);
     if (!Number.isInteger(id) || id <= 0) {
       return NextResponse.json(
         { error: "A valid booking ID is required." },
         { status: 400 }
       );
     }
+    if (!["Online", "Cash", "Mixed"].includes(paymentMode)) {
+      return NextResponse.json(
+        { error: "Please select Online, Cash, or Mixed payment." },
+        { status: 400 }
+      );
+    }
+    if (
+      !Number.isFinite(onlinePayment) ||
+      !Number.isFinite(cashPayment) ||
+      onlinePayment < 0 ||
+      cashPayment < 0
+    ) {
+      return NextResponse.json(
+        { error: "Payment amounts must be valid non-negative numbers." },
+        { status: 400 }
+      );
+    }
+    if (
+      (paymentMode === "Online" &&
+        (onlinePayment <= 0 || cashPayment !== 0)) ||
+      (paymentMode === "Cash" &&
+        (cashPayment <= 0 || onlinePayment !== 0)) ||
+      (paymentMode === "Mixed" &&
+        (onlinePayment <= 0 || cashPayment <= 0))
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The amounts must match the selected payment mode. Mixed payments require both online and cash amounts.",
+        },
+        { status: 400 }
+      );
+    }
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    // Fetch the booking
+    // Fetch current booking totals and recorded payments
     const { data: booking, error: fetchError } = await supabase
       .from("confirmed_bookings")
-      .select("id, total_amount, amount_paid")
+      .select(
+        "id, total_amount, amount_paid, amount_due, payment_mode, online_amount, cash_amount"
+      )
       .eq("id", id)
       .maybeSingle();
     if (fetchError) {
-      console.error("Failed to fetch booking:", fetchError);
       return NextResponse.json(
-        { error: fetchError.message, code: fetchError.code },
+        {
+          error: "Could not retrieve the booking.",
+          details: fetchError.message,
+        },
         { status: 500 }
       );
     }
@@ -53,29 +94,75 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    const totalAmount = Number(booking.total_amount);
-    if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+    const totalAmount = Number(booking.total_amount || 0);
+    const currentPaid = Number(booking.amount_paid || 0);
+    const outstanding = Number(booking.amount_due ?? totalAmount - currentPaid);
+    // Do not let a stale form or repeated request overcharge the booking
+    if (outstanding <= 0) {
       return NextResponse.json(
-        { error: "The booking has an invalid total amount." },
+        { error: "This booking is already fully paid." },
         { status: 400 }
       );
     }
-    // Update the amount paid. Do not write amount_due because
-    // your database does not allow direct inserts into that column.
-    const { data: updatedBooking, error: updateError } = await supabase
-      .from("confirmed_bookings")
-      .update({ amount_paid: totalAmount })
-      .eq("id", id)
-      .select("id, total_amount, amount_paid, amount_due")
-      .single();
-    if (updateError) {
-      console.error("Failed to mark booking as paid:", updateError);
+    const paymentBeingRecorded = onlinePayment + cashPayment;
+    if (Math.abs(paymentBeingRecorded - outstanding) > 0.01) {
       return NextResponse.json(
         {
-          error: updateError.message,
-          code: updateError.code,
-          details: updateError.details,
-          hint: updateError.hint,
+          error: `The payment must equal the outstanding balance of ₹${outstanding.toFixed(2)}.`,
+        },
+        { status: 400 }
+      );
+    }
+    // Preserve existing breakdowns for older bookings whose payment
+    // breakdown columns were not previously populated.
+    let existingOnline = Number(booking.online_amount || 0);
+    let existingCash = Number(booking.cash_amount || 0);
+    if (
+      existingOnline + existingCash === 0 &&
+      currentPaid > 0
+    ) {
+      if (booking.payment_mode === "Cash") {
+        existingCash = currentPaid;
+      } else {
+        existingOnline = currentPaid;
+      }
+    }
+    const newOnline = existingOnline + onlinePayment;
+    const newCash = existingCash + cashPayment;
+    const newPaid = currentPaid + paymentBeingRecorded;
+    if (newPaid > totalAmount + 0.01) {
+      return NextResponse.json(
+        { error: "The payment would exceed the total booking amount." },
+        { status: 400 }
+      );
+    }
+    let finalPaymentMode: PaymentMode;
+    if (newOnline > 0 && newCash > 0) {
+      finalPaymentMode = "Mixed";
+    } else if (newCash > 0) {
+      finalPaymentMode = "Cash";
+    } else {
+      finalPaymentMode = "Online";
+    }
+    // amount_due is generated by the database, so do not update it.
+    const { data: updatedBooking, error: updateError } = await supabase
+      .from("confirmed_bookings")
+      .update({
+        amount_paid: Math.min(newPaid, totalAmount),
+        payment_mode: finalPaymentMode,
+        online_amount: newOnline,
+        cash_amount: newCash,
+      })
+      .eq("id", id)
+      .select(
+        "id, total_amount, amount_paid, amount_due, payment_mode, online_amount, cash_amount"
+      )
+      .single();
+    if (updateError) {
+      return NextResponse.json(
+        {
+          error: "Could not update the booking payment.",
+          details: updateError.message,
         },
         { status: 500 }
       );
@@ -85,9 +172,13 @@ export async function POST(req: NextRequest) {
       booking: updatedBooking,
     });
   } catch (error) {
-    console.error("Mark booking as paid error:", error);
+    console.error("Mark-paid API error:", error);
     return NextResponse.json(
-      { error: "An unexpected error occurred while updating payment." },
+      {
+        error: "An unexpected error occurred while recording the payment.",
+        details:
+          error instanceof Error ? error.message : "Unknown server error",
+      },
       { status: 500 }
     );
   }
