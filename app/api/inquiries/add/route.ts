@@ -1,217 +1,189 @@
-"use client";
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-import { useState } from "react";
+export const runtime = "nodejs";
 
-export default function BookingPage() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [guests, setGuests] = useState("1");
-  const [occasion, setOccasion] = useState("");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [status, setStatus] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const today = new Date();
-  const todayString = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
+function getSupabase() {
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("Supabase server configuration is missing.");
+  }
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setStatus("");
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
-    if (start < todayString) {
-      setStatus("Please select today or a future check-in date.");
-      return;
+function isValidDate(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  );
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+
+    const name =
+      typeof body.name === "string" ? body.name.trim() : "";
+    const phone =
+      typeof body.phone === "string" ? body.phone.trim() : "";
+    const occasion =
+      typeof body.occasion === "string" ? body.occasion.trim() : "";
+    const checkIn = body.check_in;
+    const checkOut = body.check_out;
+    const guests = Number(body.guests);
+
+    if (!name || !phone || !isValidDate(checkIn) || !isValidDate(checkOut)) {
+      return NextResponse.json(
+        { error: "Please provide your name, phone number, and valid stay dates." },
+        { status: 400 }
+      );
     }
 
-    if (end <= start) {
-      setStatus("Check-out must be after check-in.");
-      return;
+    if (name.length > 100 || phone.length > 20 || occasion.length > 200) {
+      return NextResponse.json(
+        { error: "One or more fields exceed the allowed length." },
+        { status: 400 }
+      );
+    }
+
+    if (!Number.isInteger(guests) || guests < 1 || guests > 100) {
+      return NextResponse.json(
+        { error: "Please enter a valid number of guests." },
+        { status: 400 }
+      );
+    }
+
+    if (checkOut <= checkIn) {
+      return NextResponse.json(
+        { error: "Check-out must be after check-in." },
+        { status: 400 }
+      );
+    }
+
+    const today = new Date();
+    const todayString = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+
+    if (checkIn < todayString) {
+      return NextResponse.json(
+        { error: "Check-in must be today or a future date." },
+        { status: 400 }
+      );
     }
 
     const nights = Math.round(
-      (Date.parse(`${end}T00:00:00Z`) -
-        Date.parse(`${start}T00:00:00Z`)) /
-        (1000 * 60 * 60 * 24)
+      (Date.parse(`${checkOut}T00:00:00Z`) -
+        Date.parse(`${checkIn}T00:00:00Z`)) /
+        (24 * 60 * 60 * 1000)
     );
 
-    setSubmitting(true);
-    setStatus("Submitting your booking request...");
+    const supabase = getSupabase();
 
-    try {
-      const response = await fetch("/api/inquiries/add", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim(),
-          guests: Number(guests),
-          occasion: occasion.trim(),
-          check_in: start,
-          check_out: end,
-          nights,
-        }),
-      });
+    // Check manually blocked dates. Checkout day is excluded.
+    const { data: blockedDates, error: blockedError } = await supabase
+      .from("blocked_dates")
+      .select("date")
+      .gte("date", checkIn)
+      .lt("date", checkOut);
 
-      const result = await response.json();
+    if (blockedError) {
+      console.error("Blocked-date check failed:", blockedError);
 
-      if (!response.ok) {
-        throw new Error(result.error || "Unable to submit your request.");
-      }
-
-      setStatus(
-        "Your booking inquiry has been submitted successfully. We will contact you to confirm availability."
+      return NextResponse.json(
+        { error: "We couldn't verify those dates. Please try again later." },
+        { status: 500 }
       );
-
-      setName("");
-      setPhone("");
-      setGuests("1");
-      setOccasion("");
-      setStart("");
-      setEnd("");
-    } catch (error) {
-      setStatus(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again."
-      );
-    } finally {
-      setSubmitting(false);
     }
+
+    if (blockedDates && blockedDates.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Those dates cannot be requested. Please contact us for assistance.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // Check whether the requested stay overlaps an existing confirmed booking.
+    // Two stays overlap when existing check-in < requested check-out
+    // and existing check-out > requested check-in.
+    const { data: bookings, error: bookingsError } = await supabase
+      .from("confirmed_bookings")
+      .select("check_in, check_out")
+      .lt("check_in", checkOut)
+      .gt("check_out", checkIn);
+
+    if (bookingsError) {
+      console.error("Confirmed-booking check failed:", bookingsError);
+
+      return NextResponse.json(
+        { error: "We couldn't verify those dates. Please try again later." },
+        { status: 500 }
+      );
+    }
+
+    if (bookings && bookings.length > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Those dates cannot be requested. Please contact us for assistance.",
+        },
+        { status: 409 }
+      );
+    }
+
+    // Only valid, non-conflicting requests are saved as inquiries.
+    // Inquiries themselves do not block dates.
+    const { error: insertError } = await supabase.from("inquiries").insert({
+      name,
+      phone,
+      guests,
+      occasion: occasion || null,
+      check_in: checkIn,
+      check_out: checkOut,
+      nights,
+    });
+
+    if (insertError) {
+      console.error("Inquiry insert failed:", insertError);
+
+      return NextResponse.json(
+        { error: "We couldn't submit your inquiry. Please try again later." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message:
+          "Your booking inquiry has been submitted. We will contact you to confirm availability.",
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Inquiry API error:", error);
+
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again later." },
+      { status: 500 }
+    );
   }
-
-  return (
-    <main className="min-h-screen bg-[#EFE5D5] px-6 py-16">
-      <div className="mx-auto max-w-2xl rounded-xl bg-white p-6 shadow-md sm:p-10">
-        <h1 className="mb-4 text-3xl font-bold text-[#0F1F0F]">
-          Book Villa Anant
-        </h1>
-
-        <p className="mb-8 text-gray-600">
-          Tell us about your planned stay. Submitting this form sends a booking
-          inquiry; your reservation is not confirmed until we contact you.
-        </p>
-
-        <form onSubmit={submit} className="space-y-5">
-          <div>
-            <label htmlFor="booking-name" className="mb-2 block font-medium">
-              Full Name
-            </label>
-            <input
-              id="booking-name"
-              type="text"
-              autoComplete="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              maxLength={100}
-              className="w-full rounded border border-gray-300 p-3"
-              placeholder="Enter your full name"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="booking-phone" className="mb-2 block font-medium">
-              Phone Number
-            </label>
-            <input
-              id="booking-phone"
-              type="tel"
-              autoComplete="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              maxLength={20}
-              className="w-full rounded border border-gray-300 p-3"
-              placeholder="Enter your phone number"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="booking-guests" className="mb-2 block font-medium">
-              Number of Guests
-            </label>
-            <input
-              id="booking-guests"
-              type="number"
-              min="1"
-              max="100"
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              required
-              className="w-full rounded border border-gray-300 p-3"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="booking-occasion"
-              className="mb-2 block font-medium"
-            >
-              Occasion (Optional)
-            </label>
-            <input
-              id="booking-occasion"
-              type="text"
-              value={occasion}
-              onChange={(e) => setOccasion(e.target.value)}
-              maxLength={200}
-              className="w-full rounded border border-gray-300 p-3"
-              placeholder="Family stay, birthday, etc."
-            />
-          </div>
-
-          <div>
-            <label htmlFor="booking-start" className="mb-2 block font-medium">
-              Check-in Date
-            </label>
-            <input
-              id="booking-start"
-              type="date"
-              min={todayString}
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              required
-              className="w-full rounded border border-gray-300 p-3"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="booking-end" className="mb-2 block font-medium">
-              Check-out Date
-            </label>
-            <input
-              id="booking-end"
-              type="date"
-              min={start || todayString}
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              required
-              className="w-full rounded border border-gray-300 p-3"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded bg-[#0F1F0F] px-5 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? "Submitting..." : "Request Booking"}
-          </button>
-
-          {status && (
-            <p role="status" aria-live="polite" className="text-sm text-gray-700">
-              {status}
-            </p>
-          )}
-        </form>
-      </div>
-    </main>
-  );
 }
