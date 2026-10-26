@@ -16,8 +16,8 @@ export default function PrivacyPolicyPage() {
             1. Information We Collect
           </h2>
           <p>
-            We collect personal information necessary for booking and maintaining
-            guest security, including:
+            We collect personal information necessary for booking and
+            maintaining guest security, including:
           </p>
           <ul className="list-disc ml-6 space-y-2">
             <li>Name &amp; contact details</li>
@@ -46,11 +46,12 @@ export default function PrivacyPolicyPage() {
             3. CCTV Monitoring
           </h2>
           <p>
-            CCTV cameras are installed in <strong>outdoor public areas</strong>{" "}
-            for safety and security. Cameras are{" "}
+            CCTV cameras are installed in{" "}
+            <strong>outdoor public areas</strong> for safety and security.
+            Cameras are{" "}
             <strong>NOT placed inside private indoor spaces</strong>. By
-            entering the property, guests consent to being recorded in monitored
-            zones.
+            entering the property, guests consent to being recorded in
+            monitored zones.
           </p>
         </section>
 
@@ -102,8 +103,6 @@ export default function PrivacyPolicyPage() {
           </p>
           <p className="mt-2">
             📞 <strong>+91 8889777288</strong>
-            <br />
-            📧 <strong>villaanantara@gmail.com</strong>
             <br />
             📍 Villa Anant, Raipur
           </p>
