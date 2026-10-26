@@ -1,5 +1,12 @@
-// Validate the admin password when an admin header is supplied.
-// Public customer inquiries can be submitted without this header.
+if (!supabaseUrl || !serviceRoleKey) {
+  return NextResponse.json(
+    { error: "Database configuration is missing." },
+    { status: 500 }
+  );
+}
+
+const supabase = createClient(supabaseUrl, serviceRoleKey);
+
 const adminPassword = request.headers.get("x-admin-password");
 
 if (
@@ -40,8 +47,8 @@ if (
   );
 }
 
-const startDate = new Date(`${checkIn}T00:00:00Z`);
-const endDate = new Date(`${checkOut}T00:00:00Z`);
+const startDate = new Date(checkIn + "T00:00:00Z");
+const endDate = new Date(checkOut + "T00:00:00Z");
 
 if (
   Number.isNaN(startDate.getTime()) ||
@@ -49,7 +56,7 @@ if (
   endDate <= startDate
 ) {
   return NextResponse.json(
-    { error: "Please provide valid check-in and check-out dates." },
+    { error: "Invalid check-in or check-out dates." },
     { status: 400 }
   );
 }
@@ -60,12 +67,11 @@ const calculatedNights = Math.round(
 
 if (calculatedNights !== nights) {
   return NextResponse.json(
-    { error: "The number of nights does not match the selected dates." },
+    { error: "The number of nights does not match the dates." },
     { status: 400 }
   );
 }
 
-// Check manually blocked dates.
 const { data: blockedDates, error: blockedError } = await supabase
   .from("blocked_dates")
   .select("date")
@@ -73,7 +79,7 @@ const { data: blockedDates, error: blockedError } = await supabase
   .lt("date", checkOut);
 
 if (blockedError) {
-  console.error("Blocked-date check failed:", blockedError);
+  console.error(blockedError);
 
   return NextResponse.json(
     { error: "Could not verify date availability." },
@@ -83,15 +89,11 @@ if (blockedError) {
 
 if (blockedDates && blockedDates.length > 0) {
   return NextResponse.json(
-    {
-      error:
-        "Some selected dates are unavailable. Please choose other dates.",
-    },
+    { error: "Some selected dates are unavailable." },
     { status: 409 }
   );
 }
 
-// Check for overlapping confirmed bookings.
 const { data: bookings, error: bookingsError } = await supabase
   .from("confirmed_bookings")
   .select("id")
@@ -99,20 +101,17 @@ const { data: bookings, error: bookingsError } = await supabase
   .gt("check_out", checkIn);
 
 if (bookingsError) {
-  console.error("Confirmed-booking check failed:", bookingsError);
+  console.error(bookingsError);
 
   return NextResponse.json(
-    { error: "Could not verify booking availability." },
+    { error: "Could not verify confirmed bookings." },
     { status: 500 }
   );
 }
 
 if (bookings && bookings.length > 0) {
   return NextResponse.json(
-    {
-      error:
-        "Some selected dates are already booked. Please choose other dates.",
-    },
+    { error: "Some selected dates are already booked." },
     { status: 409 }
   );
 }
@@ -138,13 +137,10 @@ const { data, error } = await supabase
   .single();
 
 if (error) {
-  console.error("Inquiry insert failed:", error);
+  console.error(error);
 
   return NextResponse.json(
-    {
-      error:
-        "Could not save the inquiry. Check that your database columns match the submitted fields.",
-    },
+    { error: "Could not save the inquiry." },
     { status: 500 }
   );
 }
