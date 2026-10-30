@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
+type PaymentMode = "Online" | "Cash" | "Mixed";
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -30,21 +31,53 @@ function validDate(date: unknown) {
 function validateExpense(body: any) {
   const expenseName = String(body.expense_name || "").trim();
   const category = String(body.category || "").trim();
-  const amount = Number(body.amount);
-  const paymentMode = body.payment_mode;
+  const total = Number(body.amount);
+  const online = Number(body.online_amount ?? 0);
+  const cash = Number(body.cash_amount ?? 0);
+  const mode = body.payment_mode as PaymentMode;
   if (!expenseName || !category) {
     return "Expense name and category are required.";
   }
-  if (!Number.isFinite(amount) || amount <= 0) {
+  if (!Number.isFinite(total) || total <= 0) {
     return "Enter a valid expense amount greater than zero.";
   }
-  if (!["Online", "Cash"].includes(paymentMode)) {
-    return "Payment mode must be Online or Cash.";
+  if (
+    !Number.isFinite(online) ||
+    !Number.isFinite(cash) ||
+    online < 0 ||
+    cash < 0
+  ) {
+    return "Online and cash amounts must be valid non-negative numbers.";
+  }
+  if (!["Online", "Cash", "Mixed"].includes(mode)) {
+    return "Payment mode must be Online, Cash or Mixed.";
+  }
+  if (Math.abs(online + cash - total) > 0.01) {
+    return "Online and cash amounts must add up to the total expense.";
+  }
+  if (
+    (mode === "Online" && (online <= 0 || cash !== 0)) ||
+    (mode === "Cash" && (cash <= 0 || online !== 0)) ||
+    (mode === "Mixed" && (online <= 0 || cash <= 0))
+  ) {
+    return "Please enter amounts matching the selected payment mode.";
   }
   if (!validDate(body.expense_date)) {
     return "Enter a valid expense date.";
   }
   return null;
+}
+function expenseData(body: any) {
+  return {
+    expense_name: String(body.expense_name).trim(),
+    category: String(body.category).trim(),
+    amount: Number(body.amount),
+    payment_mode: body.payment_mode,
+    online_amount: Number(body.online_amount),
+    cash_amount: Number(body.cash_amount),
+    expense_date: body.expense_date,
+    description: String(body.description || "").trim() || null,
+  };
 }
 // GET: Retrieve expenses
 export async function GET(req: NextRequest) {
@@ -97,14 +130,7 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("expenses")
-      .insert({
-        expense_name: String(body.expense_name).trim(),
-        category: String(body.category).trim(),
-        amount: Number(body.amount),
-        payment_mode: body.payment_mode,
-        expense_date: body.expense_date,
-        description: String(body.description || "").trim() || null,
-      })
+      .insert(expenseData(body))
       .select("*")
       .single();
     if (error) {
@@ -153,14 +179,7 @@ export async function PATCH(req: NextRequest) {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("expenses")
-      .update({
-        expense_name: String(body.expense_name).trim(),
-        category: String(body.category).trim(),
-        amount: Number(body.amount),
-        payment_mode: body.payment_mode,
-        expense_date: body.expense_date,
-        description: String(body.description || "").trim() || null,
-      })
+      .update(expenseData(body))
       .eq("id", id)
       .select("*")
       .maybeSingle();
@@ -176,7 +195,10 @@ export async function PATCH(req: NextRequest) {
         { status: 404 }
       );
     }
-    return NextResponse.json({ success: true, expense: data });
+    return NextResponse.json({
+      success: true,
+      expense: data,
+    });
   } catch (error) {
     return NextResponse.json(
       {
