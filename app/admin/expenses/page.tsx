@@ -1,17 +1,25 @@
 "use client";
+
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+
 const BG = "#EFE5D5";
 const MOCHA = "#C29F80";
+
+type PaymentMode = "Online" | "Cash" | "Mixed";
+
 type Expense = {
   id: number;
   expense_name: string;
   category: string;
   amount: number;
-  payment_mode: "Online" | "Cash";
+  payment_mode: PaymentMode;
+  online_amount?: number | null;
+  cash_amount?: number | null;
   expense_date: string;
   description?: string | null;
 };
+
 type Booking = {
   id: number;
   check_in: string;
@@ -21,22 +29,27 @@ type Booking = {
   cash_amount?: number | null;
   payment_mode?: string | null;
 };
+
 type ExpenseForm = {
   expense_name: string;
   category: string;
-  amount: string;
-  payment_mode: "Online" | "Cash";
+  payment_mode: PaymentMode;
+  online_amount: string;
+  cash_amount: string;
   expense_date: string;
   description: string;
 };
+
 const emptyForm: ExpenseForm = {
   expense_name: "",
   category: "Maintenance",
-  amount: "",
   payment_mode: "Cash",
+  online_amount: "",
+  cash_amount: "",
   expense_date: new Date().toLocaleDateString("en-CA"),
   description: "",
 };
+
 const categories = [
   "Electricity",
   "Water",
@@ -50,10 +63,12 @@ const categories = [
   "Supplies",
   "Other",
 ];
+
 function number(value: unknown) {
   const n = Number(value ?? 0);
   return Number.isFinite(n) ? n : 0;
 }
+
 function money(value: number) {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -61,11 +76,11 @@ function money(value: number) {
     maximumFractionDigits: 2,
   }).format(value);
 }
+
 function getBreakdown(booking: Booking) {
   let online = number(booking.online_amount);
   let cash = number(booking.cash_amount);
-  // Compatibility with older bookings that have paid amounts
-  // but no recorded payment breakdown.
+
   if (online + cash === 0 && number(booking.amount_paid) > 0) {
     if (booking.payment_mode === "Cash") {
       cash = number(booking.amount_paid);
@@ -73,36 +88,65 @@ function getBreakdown(booking: Booking) {
       online = number(booking.amount_paid);
     }
   }
+
   return { online, cash };
 }
+
+function getExpenseBreakdown(expense: Expense) {
+  let online = number(expense.online_amount);
+  let cash = number(expense.cash_amount);
+
+  // Compatibility with older expenses.
+  if (online + cash === 0 && number(expense.amount) > 0) {
+    if (expense.payment_mode === "Cash") {
+      cash = number(expense.amount);
+    } else {
+      online = number(expense.amount);
+    }
+  }
+
+  return { online, cash };
+}
+
 export default function ExpensesPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
   const [form, setForm] = useState<ExpenseForm>(emptyForm);
+
   const today = new Date();
+
   const [selectedMonth, setSelectedMonth] = useState(
     `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`
   );
+
   function login(e: React.FormEvent) {
     e.preventDefault();
+
     if (!passwordInput.trim()) {
       setError("Please enter your admin password.");
       return;
     }
+
     setPassword(passwordInput);
     setAuthed(true);
     setPasswordInput("");
     setError("");
   }
+
   function logout(message: string) {
     setAuthed(false);
     setPassword("");
@@ -110,14 +154,18 @@ export default function ExpensesPage() {
     setBookings([]);
     setError(message);
   }
+
   async function loadDashboard() {
     if (!password) return;
+
     try {
       setLoading(true);
       setError("");
+
       const headers = {
         "x-admin-password": password,
       };
+
       const [expenseRes, bookingRes] = await Promise.all([
         fetch("/api/admin/expenses", {
           method: "GET",
@@ -130,27 +178,31 @@ export default function ExpensesPage() {
           cache: "no-store",
         }),
       ]);
+
       const expenseJson = await expenseRes.json();
       const bookingJson = await bookingRes.json();
+
       if (expenseRes.status === 401 || bookingRes.status === 401) {
         logout("Unauthorized. Please log in again.");
         return;
       }
+
       if (!expenseRes.ok) {
-        throw new Error(
-          expenseJson.error || "Could not load expenses."
-        );
+        throw new Error(expenseJson.error || "Could not load expenses.");
       }
+
       if (!bookingRes.ok) {
         throw new Error(
           bookingJson.error || "Could not load confirmed bookings."
         );
       }
+
       setExpenses(
         Array.isArray(expenseJson.expenses)
           ? expenseJson.expenses
           : []
       );
+
       setBookings(
         Array.isArray(bookingJson.bookings)
           ? bookingJson.bookings
@@ -166,12 +218,14 @@ export default function ExpensesPage() {
       setLoading(false);
     }
   }
+
   useEffect(() => {
     if (authed && password) {
       loadDashboard();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed, password]);
+
   const monthlyExpenses = useMemo(
     () =>
       expenses.filter(
@@ -179,6 +233,7 @@ export default function ExpensesPage() {
       ),
     [expenses, selectedMonth]
   );
+
   const monthlyBookings = useMemo(
     () =>
       bookings.filter(
@@ -186,29 +241,43 @@ export default function ExpensesPage() {
       ),
     [bookings, selectedMonth]
   );
+
   const totalIncome = monthlyBookings.reduce(
     (sum, booking) => sum + number(booking.amount_paid),
     0
   );
+
   const onlineIncome = monthlyBookings.reduce(
     (sum, booking) => sum + getBreakdown(booking).online,
     0
   );
+
   const cashIncome = monthlyBookings.reduce(
     (sum, booking) => sum + getBreakdown(booking).cash,
     0
   );
+
   const totalExpenses = monthlyExpenses.reduce(
     (sum, expense) => sum + number(expense.amount),
     0
   );
-  const onlineExpenses = monthlyExpenses
-    .filter((expense) => expense.payment_mode === "Online")
-    .reduce((sum, expense) => sum + number(expense.amount), 0);
-  const cashExpenses = monthlyExpenses
-    .filter((expense) => expense.payment_mode === "Cash")
-    .reduce((sum, expense) => sum + number(expense.amount), 0);
+
+  const onlineExpenses = monthlyExpenses.reduce(
+    (sum, expense) => sum + getExpenseBreakdown(expense).online,
+    0
+  );
+
+  const cashExpenses = monthlyExpenses.reduce(
+    (sum, expense) => sum + getExpenseBreakdown(expense).cash,
+    0
+  );
+
   const availableBalance = totalIncome - totalExpenses;
+
+  const formOnline = number(form.online_amount);
+  const formCash = number(form.cash_amount);
+  const formTotal = formOnline + formCash;
+
   function startAddExpense() {
     setEditingId(null);
     setForm(emptyForm);
@@ -216,27 +285,73 @@ export default function ExpensesPage() {
     setError("");
     setNotice("");
   }
+
   function startEditExpense(expense: Expense) {
+    const breakdown = getExpenseBreakdown(expense);
+
     setEditingId(expense.id);
+
     setForm({
       expense_name: expense.expense_name,
       category: expense.category,
-      amount: String(expense.amount),
       payment_mode: expense.payment_mode,
+      online_amount:
+        breakdown.online > 0 ? String(breakdown.online) : "",
+      cash_amount:
+        breakdown.cash > 0 ? String(breakdown.cash) : "",
       expense_date: expense.expense_date,
       description: expense.description || "",
     });
+
     setShowForm(true);
     setError("");
     setNotice("");
   }
+
+  function changePaymentMode(mode: PaymentMode) {
+    setForm((previous) => {
+      const currentTotal =
+        number(previous.online_amount) + number(previous.cash_amount);
+
+      if (mode === "Online") {
+        return {
+          ...previous,
+          payment_mode: mode,
+          online_amount:
+            currentTotal > 0 ? String(currentTotal) : "",
+          cash_amount: "",
+        };
+      }
+
+      if (mode === "Cash") {
+        return {
+          ...previous,
+          payment_mode: mode,
+          online_amount: "",
+          cash_amount:
+            currentTotal > 0 ? String(currentTotal) : "",
+        };
+      }
+
+      return {
+        ...previous,
+        payment_mode: mode,
+      };
+    });
+  }
+
   async function saveExpense(e: React.FormEvent) {
     e.preventDefault();
+
     if (!password) {
       logout("Please log in again.");
       return;
     }
-    const amount = Number(form.amount);
+
+    const onlineAmount = formOnline;
+    const cashAmount = formCash;
+    const amount = onlineAmount + cashAmount;
+
     if (
       !form.expense_name.trim() ||
       !form.category ||
@@ -247,11 +362,38 @@ export default function ExpensesPage() {
       setError("Please enter valid expense details.");
       return;
     }
+
+    if (
+      form.payment_mode === "Online" &&
+      (onlineAmount <= 0 || cashAmount !== 0)
+    ) {
+      setError("Please enter a valid online amount.");
+      return;
+    }
+
+    if (
+      form.payment_mode === "Cash" &&
+      (cashAmount <= 0 || onlineAmount !== 0)
+    ) {
+      setError("Please enter a valid cash amount.");
+      return;
+    }
+
+    if (
+      form.payment_mode === "Mixed" &&
+      (onlineAmount <= 0 || cashAmount <= 0)
+    ) {
+      setError("For Mixed payments, enter both Online and Cash amounts.");
+      return;
+    }
+
     setSaving(true);
     setError("");
     setNotice("");
+
     try {
       const editing = editingId !== null;
+
       const res = await fetch("/api/admin/expenses", {
         method: editing ? "PATCH" : "POST",
         headers: {
@@ -264,26 +406,34 @@ export default function ExpensesPage() {
           category: form.category,
           amount,
           payment_mode: form.payment_mode,
+          online_amount: onlineAmount,
+          cash_amount: cashAmount,
           expense_date: form.expense_date,
           description: form.description.trim(),
         }),
       });
+
       const json = await res.json();
+
       if (res.status === 401) {
         logout("Unauthorized. Please log in again.");
         return;
       }
+
       if (!res.ok) {
         throw new Error(json.error || "Could not save expense.");
       }
+
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
+
       setNotice(
         editing
           ? "Expense updated successfully."
           : "Expense added successfully."
       );
+
       await loadDashboard();
     } catch (err) {
       setError(
@@ -293,12 +443,15 @@ export default function ExpensesPage() {
       setSaving(false);
     }
   }
+
   async function deleteExpense(id: number) {
     if (!window.confirm("Are you sure you want to delete this expense?")) {
       return;
     }
+
     setError("");
     setNotice("");
+
     try {
       const res = await fetch("/api/admin/expenses", {
         method: "DELETE",
@@ -308,14 +461,18 @@ export default function ExpensesPage() {
         },
         body: JSON.stringify({ id }),
       });
+
       const json = await res.json();
+
       if (res.status === 401) {
         logout("Unauthorized. Please log in again.");
         return;
       }
+
       if (!res.ok) {
         throw new Error(json.error || "Could not delete expense.");
       }
+
       setNotice("Expense deleted successfully.");
       await loadDashboard();
     } catch (err) {
@@ -324,6 +481,7 @@ export default function ExpensesPage() {
       );
     }
   }
+
   if (!authed) {
     return (
       <main
@@ -334,12 +492,15 @@ export default function ExpensesPage() {
           <h1 className="text-2xl font-bold text-center mb-5">
             Villa Anant
           </h1>
+
           <h2 className="text-lg font-semibold text-center mb-4">
             Expenses Admin Login
           </h2>
+
           {error && (
             <p className="text-red-600 text-sm mb-3">{error}</p>
           )}
+
           <form onSubmit={login} className="space-y-4">
             <input
               type="password"
@@ -350,6 +511,7 @@ export default function ExpensesPage() {
               autoComplete="current-password"
               required
             />
+
             <button
               type="submit"
               className="w-full bg-black text-white py-3 rounded"
@@ -361,6 +523,7 @@ export default function ExpensesPage() {
       </main>
     );
   }
+
   return (
     <main
       className="min-h-screen p-4 md:p-6"
@@ -378,6 +541,7 @@ export default function ExpensesPage() {
             Income and expense management
           </p>
         </div>
+
         <div className="flex flex-wrap gap-2">
           <Link
             href="/admin/confirmed"
@@ -385,6 +549,7 @@ export default function ExpensesPage() {
           >
             Confirmed Bookings
           </Link>
+
           <button
             onClick={loadDashboard}
             disabled={loading}
@@ -392,6 +557,7 @@ export default function ExpensesPage() {
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
+
           <button
             onClick={() => logout("You have logged out.")}
             className="bg-black/20 border border-white/50 px-4 py-2 rounded"
@@ -400,16 +566,19 @@ export default function ExpensesPage() {
           </button>
         </div>
       </header>
+
       {error && (
         <div className="bg-red-100 text-red-800 p-3 rounded mb-4 whitespace-pre-wrap">
           {error}
         </div>
       )}
+
       {notice && (
         <div className="bg-green-100 text-green-800 p-3 rounded mb-4">
           {notice}
         </div>
       )}
+
       <section className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3">
           <div>
@@ -418,6 +587,7 @@ export default function ExpensesPage() {
               Based on actual payments received from confirmed bookings.
             </p>
           </div>
+
           <label className="text-sm font-medium">
             Select Month
             <input
@@ -428,6 +598,7 @@ export default function ExpensesPage() {
             />
           </label>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5">
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Total Income</p>
@@ -438,24 +609,28 @@ export default function ExpensesPage() {
               Actual payments received
             </p>
           </div>
+
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Online Income</p>
             <p className="text-2xl font-bold">
               {money(onlineIncome)}
             </p>
           </div>
+
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Cash Income</p>
             <p className="text-2xl font-bold">
               {money(cashIncome)}
             </p>
           </div>
+
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Total Expenses</p>
             <p className="text-2xl font-bold text-red-700">
               {money(totalExpenses)}
             </p>
           </div>
+
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Available Balance</p>
             <p
@@ -469,6 +644,7 @@ export default function ExpensesPage() {
               Income minus expenses
             </p>
           </div>
+
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Expense Entries</p>
             <p className="text-2xl font-bold">
@@ -476,21 +652,25 @@ export default function ExpensesPage() {
             </p>
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-3 mt-4">
           <div className="border rounded-lg p-3">
             <p className="text-xs text-gray-600">Online Expenses</p>
             <p className="font-bold">{money(onlineExpenses)}</p>
           </div>
+
           <div className="border rounded-lg p-3">
             <p className="text-xs text-gray-600">Cash Expenses</p>
             <p className="font-bold">{money(cashExpenses)}</p>
           </div>
         </div>
+
         <p className="text-xs text-gray-500 mt-4">
           Income is calculated using bookings whose check-in date falls
           within the selected month. Expenses are grouped by expense date.
         </p>
       </section>
+
       <section className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -499,6 +679,7 @@ export default function ExpensesPage() {
               Record and manage Villa Anant expenses.
             </p>
           </div>
+
           <button
             onClick={startAddExpense}
             className="bg-black text-white px-5 py-2 rounded font-semibold"
@@ -506,6 +687,7 @@ export default function ExpensesPage() {
             + Add Expense
           </button>
         </div>
+
         {showForm && (
           <form
             onSubmit={saveExpense}
@@ -514,6 +696,7 @@ export default function ExpensesPage() {
             <h3 className="font-bold md:col-span-2">
               {editingId ? "Edit Expense" : "New Expense"}
             </h3>
+
             <label className="text-sm font-medium">
               Expense Name *
               <input
@@ -526,6 +709,7 @@ export default function ExpensesPage() {
                 placeholder="Electricity bill"
               />
             </label>
+
             <label className="text-sm font-medium">
               Category *
               <select
@@ -542,37 +726,78 @@ export default function ExpensesPage() {
                 ))}
               </select>
             </label>
-            <label className="text-sm font-medium">
-              Amount (₹) *
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.amount}
-                onChange={(e) =>
-                  setForm({ ...form, amount: e.target.value })
-                }
-                className="mt-1 w-full border p-2 rounded"
-                placeholder="5000"
-              />
-            </label>
-            <label className="text-sm font-medium">
+
+            <label className="text-sm font-medium md:col-span-2">
               Payment Mode *
               <select
                 value={form.payment_mode}
                 onChange={(e) =>
-                  setForm({
-                    ...form,
-                    payment_mode: e.target.value as "Online" | "Cash",
-                  })
+                  changePaymentMode(e.target.value as PaymentMode)
                 }
                 className="mt-1 w-full border p-2 rounded bg-white"
               >
                 <option value="Cash">Cash</option>
                 <option value="Online">Online</option>
+                <option value="Mixed">Mixed (Online + Cash)</option>
               </select>
             </label>
+
+            {(form.payment_mode === "Online" ||
+              form.payment_mode === "Mixed") && (
+              <label className="text-sm font-medium">
+                Online Amount (₹) *
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={form.online_amount}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      online_amount: e.target.value,
+                    })
+                  }
+                  className="mt-1 w-full border p-2 rounded"
+                  placeholder="3000"
+                />
+              </label>
+            )}
+
+            {(form.payment_mode === "Cash" ||
+              form.payment_mode === "Mixed") && (
+              <label className="text-sm font-medium">
+                Cash Amount (₹) *
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  required
+                  value={form.cash_amount}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      cash_amount: e.target.value,
+                    })
+                  }
+                  className="mt-1 w-full border p-2 rounded"
+                  placeholder="2000"
+                />
+              </label>
+            )}
+
+            <div className="md:col-span-2 rounded-lg bg-[#EFE5D5] p-4">
+              <p className="text-sm text-gray-600">
+                Total Expense
+              </p>
+              <p className="text-2xl font-bold text-red-700">
+                {money(formTotal)}
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Online {money(formOnline)} + Cash {money(formCash)}
+              </p>
+            </div>
+
             <label className="text-sm font-medium">
               Expense Date *
               <input
@@ -585,6 +810,7 @@ export default function ExpensesPage() {
                 className="mt-1 w-full border p-2 rounded"
               />
             </label>
+
             <label className="text-sm font-medium">
               Description / Notes
               <input
@@ -596,6 +822,7 @@ export default function ExpensesPage() {
                 placeholder="Optional details"
               />
             </label>
+
             <div className="md:col-span-2 flex flex-wrap gap-3">
               <button
                 type="submit"
@@ -608,6 +835,7 @@ export default function ExpensesPage() {
                     ? "Update Expense"
                     : "Save Expense"}
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -623,16 +851,22 @@ export default function ExpensesPage() {
           </form>
         )}
       </section>
+
       <section className="bg-white rounded-lg shadow p-4">
         <h2 className="text-lg font-bold mb-4">Expense History</h2>
+
         {loading && (
-          <p className="text-sm text-gray-600">Loading financial data...</p>
+          <p className="text-sm text-gray-600">
+            Loading financial data...
+          </p>
         )}
+
         {!loading && monthlyExpenses.length === 0 && (
           <p className="text-gray-600 text-sm">
             No expenses recorded for this month.
           </p>
         )}
+
         {monthlyExpenses.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -642,66 +876,96 @@ export default function ExpensesPage() {
                   <th className="p-3">Expense</th>
                   <th className="p-3">Category</th>
                   <th className="p-3">Mode</th>
-                  <th className="p-3">Amount</th>
+                  <th className="p-3">Online</th>
+                  <th className="p-3">Cash</th>
+                  <th className="p-3">Total</th>
                   <th className="p-3">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
-                {monthlyExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-b">
-                    <td className="p-3 whitespace-nowrap">
-                      {new Date(
-                        `${expense.expense_date}T00:00:00`
-                      ).toLocaleDateString("en-IN")}
-                    </td>
-                    <td className="p-3 font-medium">
-                      {expense.expense_name}
-                      {expense.description && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          {expense.description}
-                        </p>
-                      )}
-                    </td>
-                    <td className="p-3">{expense.category}</td>
-                    <td className="p-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${
-                          expense.payment_mode === "Cash"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {expense.payment_mode}
-                      </span>
-                    </td>
-                    <td className="p-3 font-semibold text-red-700 whitespace-nowrap">
-                      {money(number(expense.amount))}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => startEditExpense(expense)}
-                          className="text-blue-700 font-semibold"
+                {monthlyExpenses.map((expense) => {
+                  const breakdown = getExpenseBreakdown(expense);
+
+                  return (
+                    <tr key={expense.id} className="border-b">
+                      <td className="p-3 whitespace-nowrap">
+                        {new Date(
+                          `${expense.expense_date}T00:00:00`
+                        ).toLocaleDateString("en-IN")}
+                      </td>
+
+                      <td className="p-3 font-medium">
+                        {expense.expense_name}
+                        {expense.description && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {expense.description}
+                          </p>
+                        )}
+                      </td>
+
+                      <td className="p-3">{expense.category}</td>
+
+                      <td className="p-3">
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs ${
+                            expense.payment_mode === "Cash"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : expense.payment_mode === "Mixed"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-blue-100 text-blue-800"
+                          }`}
                         >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteExpense(expense.id)}
-                          className="text-red-600 font-semibold"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {expense.payment_mode}
+                        </span>
+                      </td>
+
+                      <td className="p-3 whitespace-nowrap">
+                        {money(breakdown.online)}
+                      </td>
+
+                      <td className="p-3 whitespace-nowrap">
+                        {money(breakdown.cash)}
+                      </td>
+
+                      <td className="p-3 font-semibold text-red-700 whitespace-nowrap">
+                        {money(number(expense.amount))}
+                      </td>
+
+                      <td className="p-3">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => startEditExpense(expense)}
+                            className="text-blue-700 font-semibold"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => deleteExpense(expense.id)}
+                            className="text-red-600 font-semibold"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
+
               <tfoot>
                 <tr className="bg-gray-50 font-bold">
                   <td colSpan={4} className="p-3 text-right">
-                    Monthly Expenses:
+                    Monthly Total:
                   </td>
-                  <td className="p-3 text-red-700">
+                  <td className="p-3 whitespace-nowrap">
+                    {money(onlineExpenses)}
+                  </td>
+                  <td className="p-3 whitespace-nowrap">
+                    {money(cashExpenses)}
+                  </td>
+                  <td className="p-3 text-red-700 whitespace-nowrap">
                     {money(totalExpenses)}
                   </td>
                   <td />
@@ -711,6 +975,7 @@ export default function ExpensesPage() {
           </div>
         )}
       </section>
+
       <footer className="text-center text-xs text-gray-500 mt-6">
         Villa Anant Financial Management
       </footer>
