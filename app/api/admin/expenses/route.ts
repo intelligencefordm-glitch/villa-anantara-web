@@ -17,7 +17,36 @@ function authorized(req: NextRequest) {
     password === process.env.ADMIN_PASSWORD
   );
 }
-// GET: Retrieve all expenses
+function validDate(date: unknown) {
+  if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return false;
+  }
+  const parsed = new Date(`${date}T00:00:00Z`);
+  return (
+    Number.isFinite(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === date
+  );
+}
+function validateExpense(body: any) {
+  const expenseName = String(body.expense_name || "").trim();
+  const category = String(body.category || "").trim();
+  const amount = Number(body.amount);
+  const paymentMode = body.payment_mode;
+  if (!expenseName || !category) {
+    return "Expense name and category are required.";
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "Enter a valid expense amount greater than zero.";
+  }
+  if (!["Online", "Cash"].includes(paymentMode)) {
+    return "Payment mode must be Online or Cash.";
+  }
+  if (!validDate(body.expense_date)) {
+    return "Enter a valid expense date.";
+  }
+  return null;
+}
+// GET: Retrieve expenses
 export async function GET(req: NextRequest) {
   try {
     if (!authorized(req)) {
@@ -34,7 +63,7 @@ export async function GET(req: NextRequest) {
       .order("created_at", { ascending: false });
     if (error) {
       return NextResponse.json(
-        { error: "Could not retrieve expenses.", details: error.message },
+        { error: error.message },
         { status: 500 }
       );
     }
@@ -42,14 +71,13 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "An unexpected error occurred.",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : "Unexpected error.",
       },
       { status: 500 }
     );
   }
 }
-// POST: Add a new expense
+// POST: Add expense
 export async function POST(req: NextRequest) {
   try {
     if (!authorized(req)) {
@@ -59,39 +87,10 @@ export async function POST(req: NextRequest) {
       );
     }
     const body = await req.json();
-    const expenseName = String(body.expense_name || "").trim();
-    const category = String(body.category || "").trim();
-    const amount = Number(body.amount);
-    const paymentMode = body.payment_mode;
-    const expenseDate = body.expense_date;
-    const description = String(body.description || "").trim();
-    if (!expenseName || !category) {
+    const validationError = validateExpense(body);
+    if (validationError) {
       return NextResponse.json(
-        { error: "Expense name and category are required." },
-        { status: 400 }
-      );
-    }
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json(
-        { error: "Enter a valid expense amount greater than zero." },
-        { status: 400 }
-      );
-    }
-    if (!["Online", "Cash"].includes(paymentMode)) {
-      return NextResponse.json(
-        { error: "Payment mode must be Online or Cash." },
-        { status: 400 }
-      );
-    }
-    if (
-      expenseDate &&
-      (typeof expenseDate !== "string" ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(expenseDate) ||
-        !Number.isFinite(Date.parse(`${expenseDate}T00:00:00Z`)) ||
-        new Date(`${expenseDate}T00:00:00Z`).toISOString().slice(0, 10) !== expenseDate)
-    ) {
-      return NextResponse.json(
-        { error: "Enter a valid expense date." },
+        { error: validationError },
         { status: 400 }
       );
     }
@@ -99,18 +98,18 @@ export async function POST(req: NextRequest) {
     const { data, error } = await supabase
       .from("expenses")
       .insert({
-        expense_name: expenseName,
-        category,
-        amount,
-        payment_mode: paymentMode,
-        expense_date: expenseDate || new Date().toISOString().slice(0, 10),
-        description: description || null,
+        expense_name: String(body.expense_name).trim(),
+        category: String(body.category).trim(),
+        amount: Number(body.amount),
+        payment_mode: body.payment_mode,
+        expense_date: body.expense_date,
+        description: String(body.description || "").trim() || null,
       })
       .select("*")
       .single();
     if (error) {
       return NextResponse.json(
-        { error: "Could not save expense.", details: error.message },
+        { error: error.message },
         { status: 500 }
       );
     }
@@ -121,8 +120,113 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "An unexpected error occurred.",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : "Unexpected error.",
+      },
+      { status: 500 }
+    );
+  }
+}
+// PATCH: Edit expense
+export async function PATCH(req: NextRequest) {
+  try {
+    if (!authorized(req)) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in again." },
+        { status: 401 }
+      );
+    }
+    const body = await req.json();
+    const id = Number(body.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return NextResponse.json(
+        { error: "A valid expense ID is required." },
+        { status: 400 }
+      );
+    }
+    const validationError = validateExpense(body);
+    if (validationError) {
+      return NextResponse.json(
+        { error: validationError },
+        { status: 400 }
+      );
+    }
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("expenses")
+      .update({
+        expense_name: String(body.expense_name).trim(),
+        category: String(body.category).trim(),
+        amount: Number(body.amount),
+        payment_mode: body.payment_mode,
+        expense_date: body.expense_date,
+        description: String(body.description || "").trim() || null,
+      })
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+    if (!data) {
+      return NextResponse.json(
+        { error: "Expense not found." },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ success: true, expense: data });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unexpected error.",
+      },
+      { status: 500 }
+    );
+  }
+}
+// DELETE: Delete expense
+export async function DELETE(req: NextRequest) {
+  try {
+    if (!authorized(req)) {
+      return NextResponse.json(
+        { error: "Unauthorized. Please log in again." },
+        { status: 401 }
+      );
+    }
+    const body = await req.json();
+    const id = Number(body.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return NextResponse.json(
+        { error: "A valid expense ID is required." },
+        { status: 400 }
+      );
+    }
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+    if (!data) {
+      return NextResponse.json(
+        { error: "Expense not found." },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Unexpected error.",
       },
       { status: 500 }
     );
