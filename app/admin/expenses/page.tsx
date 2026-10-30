@@ -96,7 +96,6 @@ function getExpenseBreakdown(expense: Expense) {
   let online = number(expense.online_amount);
   let cash = number(expense.cash_amount);
 
-  // Compatibility with older expenses.
   if (online + cash === 0 && number(expense.amount) > 0) {
     if (expense.payment_mode === "Cash") {
       cash = number(expense.amount);
@@ -242,6 +241,19 @@ export default function ExpensesPage() {
     [bookings, selectedMonth]
   );
 
+  // All income received before the selected month.
+  const previousIncome = bookings
+    .filter((booking) => booking.check_in?.slice(0, 7) < selectedMonth)
+    .reduce((sum, booking) => sum + number(booking.amount_paid), 0);
+
+  // All expenses recorded before the selected month.
+  const previousExpenses = expenses
+    .filter((expense) => expense.expense_date?.slice(0, 7) < selectedMonth)
+    .reduce((sum, expense) => sum + number(expense.amount), 0);
+
+  // Previous months' closing balance becomes this month's opening balance.
+  const openingBalance = previousIncome - previousExpenses;
+
   const totalIncome = monthlyBookings.reduce(
     (sum, booking) => sum + number(booking.amount_paid),
     0
@@ -272,7 +284,8 @@ export default function ExpensesPage() {
     0
   );
 
-  const availableBalance = totalIncome - totalExpenses;
+  const availableBalance =
+    openingBalance + totalIncome - totalExpenses;
 
   const formOnline = number(form.online_amount);
   const formCash = number(form.cash_amount);
@@ -317,8 +330,7 @@ export default function ExpensesPage() {
         return {
           ...previous,
           payment_mode: mode,
-          online_amount:
-            currentTotal > 0 ? String(currentTotal) : "",
+          online_amount: currentTotal > 0 ? String(currentTotal) : "",
           cash_amount: "",
         };
       }
@@ -328,8 +340,7 @@ export default function ExpensesPage() {
           ...previous,
           payment_mode: mode,
           online_amount: "",
-          cash_amount:
-            currentTotal > 0 ? String(currentTotal) : "",
+          cash_amount: currentTotal > 0 ? String(currentTotal) : "",
         };
       }
 
@@ -584,7 +595,7 @@ export default function ExpensesPage() {
           <div>
             <h2 className="text-xl font-bold">Financial Overview</h2>
             <p className="text-sm text-gray-600">
-              Based on actual payments received from confirmed bookings.
+              Income, expenses and carried-forward balance.
             </p>
           </div>
 
@@ -601,7 +612,17 @@ export default function ExpensesPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5">
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
-            <p className="text-sm text-gray-600">Total Income</p>
+            <p className="text-sm text-gray-600">Previous Balance / Opening Balance</p>
+            <p className={`text-2xl font-bold ${openingBalance < 0 ? "text-red-700" : "text-green-800"}`}>
+              {money(openingBalance)}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Balance carried forward
+            </p>
+          </div>
+
+          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+            <p className="text-sm text-gray-600">Current Month Income</p>
             <p className="text-2xl font-bold text-green-800">
               {money(totalIncome)}
             </p>
@@ -625,7 +646,7 @@ export default function ExpensesPage() {
           </div>
 
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
-            <p className="text-sm text-gray-600">Total Expenses</p>
+            <p className="text-sm text-gray-600">Current Month Expenses</p>
             <p className="text-2xl font-bold text-red-700">
               {money(totalExpenses)}
             </p>
@@ -633,15 +654,11 @@ export default function ExpensesPage() {
 
           <div className="rounded-lg p-4 bg-[#EFE5D5]">
             <p className="text-sm text-gray-600">Available Balance</p>
-            <p
-              className={`text-2xl font-bold ${
-                availableBalance < 0 ? "text-red-700" : "text-green-800"
-              }`}
-            >
+            <p className={`text-2xl font-bold ${availableBalance < 0 ? "text-red-700" : "text-green-800"}`}>
               {money(availableBalance)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Income minus expenses
+              Opening balance + income − expenses
             </p>
           </div>
 
@@ -666,8 +683,9 @@ export default function ExpensesPage() {
         </div>
 
         <p className="text-xs text-gray-500 mt-4">
-          Income is calculated using bookings whose check-in date falls
-          within the selected month. Expenses are grouped by expense date.
+          Income is grouped by booking check-in month. Expenses are grouped
+          by expense date. Previous balance includes all earlier recorded
+          income and expenses.
         </p>
       </section>
 
@@ -787,9 +805,7 @@ export default function ExpensesPage() {
             )}
 
             <div className="md:col-span-2 rounded-lg bg-[#EFE5D5] p-4">
-              <p className="text-sm text-gray-600">
-                Total Expense
-              </p>
+              <p className="text-sm text-gray-600">Total Expense</p>
               <p className="text-2xl font-bold text-red-700">
                 {money(formTotal)}
               </p>
