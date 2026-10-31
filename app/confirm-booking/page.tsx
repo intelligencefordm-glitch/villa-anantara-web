@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function ConfirmBookingPage() {
-  const MOCHA = "#C29F80";
+  const MOCHA = "#b5714a";
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -108,15 +110,14 @@ export default function ConfirmBookingPage() {
   }
 
   return (
-    <main
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{ background: "#EFE5D5" }}
-    >
+    <>
+      <SiteHeader />
+      <main className="flex min-h-screen items-center justify-center bg-sand px-6 pb-16 pt-28">
       <form
         onSubmit={handleSubmit}
-        className="bg-white w-full max-w-lg p-6 rounded shadow"
+        className="bg-cream w-full max-w-lg p-6 md:p-8 rounded-2xl border border-ink/10 shadow-sm"
       >
-        <h1 className="text-2xl font-bold mb-6 text-center">
+        <h1 className="font-display text-4xl md:text-5xl font-medium mb-6 text-center">
           Confirm Booking
         </h1>
 
@@ -257,5 +258,7 @@ export default function ConfirmBookingPage() {
         </button>
       </form>
     </main>
+      <SiteFooter />
+    </>
   );
 }
