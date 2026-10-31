@@ -1,345 +1,163 @@
-"use client";
+import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
-import React, { useState, useEffect } from "react";
+const ROOMS = [
+  { name: "The Oak Haven", img: "/rooms/room1-1.jpg", text: "A spacious master bedroom with warm wood tones, natural textures and a cosy ambience. Designed for peaceful, luxurious rest." },
+  { name: "The Terra Studio", img: "/rooms/room2-1.jpg", text: "Earthy tones, artistic ceiling lines and a serene vibe create a relaxing environment ideal for unwinding." },
+  { name: "The Moonstone Suite", img: "/rooms/room3-1.jpg", text: "Soft lighting, rich textures and a warm atmosphere define this premium suite for restful nights and cosy mornings." },
+];
 
-const MOCHA = "#C29F80";
+const GALLERY = [
+  { src: "/villa/anantara3.webp", cls: "md:col-span-2 md:row-span-2" },
+  { src: "/villa/anantara10.webp", cls: "" },
+  { src: "/villa/anantara13.webp", cls: "" },
+  { src: "/videos/hero-poster.jpg", cls: "md:col-span-2" },
+  { src: "/villa/anantara5.webp", cls: "" },
+  { src: "/villa/anantara8.webp", cls: "" },
+];
 
-// Slideshow images
-const SLIDES = Array.from(
-  { length: 15 },
-  (_, i) => `/villa/anantara${i + 1}.webp`
-);
+const OCCASIONS = [
+  ["Weekend Stays", "Unplug from the city and slow right down."],
+  ["Family Time", "Space for everyone, with total privacy."],
+  ["Celebrations", "Birthdays and special occasions, your way."],
+  ["Quiet Retreats", "Pool, garden and silence, all yours."],
+];
 
-// ---------------- Slideshow Component ----------------
-function Slideshow() {
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(
-      () => setIndex((prev) => (prev + 1) % SLIDES.length),
-      3000
-    );
-
-    return () => clearInterval(timer);
-  }, []);
-
+function Eyebrow({ children, light }: { children: React.ReactNode; light?: boolean }) {
   return (
-    <div
-      className="
-        relative mx-auto
-        w-full max-w-6xl
-        h-[500px] md:h-[650px]
-        overflow-hidden
-        rounded-xl shadow-lg bg-[#ddd]
-      "
-    >
-      {SLIDES.map((img, i) => (
-        <img
-          key={i}
-          src={img}
-          alt={`Villa Anant - Slide ${i + 1}`}
-          className={`
-            absolute inset-0
-            w-full h-full
-            object-cover
-            transition-opacity duration-[1200ms]
-            ${index === i ? "opacity-100" : "opacity-0"}
-          `}
-          onError={() => console.error("Failed to load:", img)}
-        />
-      ))}
-
-      {/* Dots */}
-      <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2">
-        {SLIDES.map((_, i) => (
-          <span
-            key={i}
-            className={`w-3 h-3 rounded-full ${
-              index === i ? "bg-white" : "bg-white/40"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
+    <span className={`text-xs font-medium uppercase tracking-[0.28em] ${light ? "text-[#f0c9ad]" : "text-clay"}`}>
+      {children}
+    </span>
   );
 }
 
-// ---------------- Main Page ----------------
 export default function Home() {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#EFE5D5" }}>
-      {/* HEADER */}
-      <header
-        className="fixed top-0 left-0 w-full z-50"
-        style={{
-          backgroundColor: MOCHA,
-          borderBottom: "1px solid rgba(0,0,0,0.15)",
-        }}
-      >
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3">
-            <img
-              src="/images/logo.png"
-              alt="Villa Anant Logo"
-              className="h-10 w-auto"
-            />
-          </a>
+    <main className="bg-sand">
+      <SiteHeader />
 
-          {/* Center Title */}
-          <div className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <h1
-              className="text-white text-lg md:text-xl tracking-wide"
-              style={{ fontFamily: "var(--font-abigail)" }}
-            >
-              Villa Anant
-            </h1>
-          </div>
-
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-6 text-white text-sm font-bold">
-            <a href="/" className="hover:opacity-80">
-              Home
-            </a>
-            <a href="/rooms" className="hover:opacity-80">
-              Rooms
-            </a>
-            <a href="/check" className="hover:opacity-80">
-              Check Availability
-            </a>
-            <a href="/contact" className="hover:opacity-80">
-              Contact
-            </a>
-          </nav>
-        </div>
-
-        {/* Mobile Nav */}
-        <nav className="md:hidden overflow-x-auto flex gap-6 px-4 py-2 text-white text-sm font-bold">
-          <a href="/" className="whitespace-nowrap">
-            Home
-          </a>
-          <a href="/rooms" className="whitespace-nowrap">
-            Rooms
-          </a>
-          <a href="/check" className="whitespace-nowrap">
-            Check Availability
-          </a>
-          <a href="/contact" className="whitespace-nowrap">
-            Contact
-          </a>
-        </nav>
-      </header>
-
-      {/* Spacer for fixed header */}
-      <div style={{ height: "110px" }} />
-
-      {/* =========================
-          TOP IMAGE WITH BLUR BG
-      ========================= */}
-      <section className="relative w-full h-[500px] md:h-[650px] overflow-hidden">
-        {/* Blurred background fill */}
-        <img
-          src="/MAIN.jpg"
-          className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70"
-          alt="Villa Anant Background"
-        />
-
-        {/* Sharp centered image */}
-        <img
-          src="/MAIN.jpg"
-          className="absolute inset-0 m-auto h-full w-auto max-w-none object-contain drop-shadow-xl"
-          alt="Villa Anant"
-        />
-      </section>
-
-      {/* =========================
-          HERO VIDEO
-      ========================= */}
-      <section className="relative w-full h-[60vh] md:h-[75vh] overflow-hidden mt-10">
-        <video
-          src="/videos/hero.mp4"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/35"></div>
-      </section>
-
-      {/* =========================
-          SLIDESHOW + TITLE
-      ========================= */}
-      <section className="px-6 py-16 text-center">
-        <h2 className="text-3xl font-semibold text-[#0F1F0F] mb-6">
-          Villa Anant
-        </h2>
-
-        <Slideshow />
-
-        {/* BOOK NOW BUTTON */}
-        <a
-          href="/check"
-          className="mt-8 inline-block px-8 py-3 bg-[#0F1F0F] text-white rounded-lg text-lg shadow hover:scale-105 transition"
-        >
-          Book Now
-        </a>
-      </section>
-
-      {/* =========================
-          ABOUT SECTION
-      ========================= */}
-      <section
-        className="max-w-6xl mx-auto px-6 py-20 border-t"
-        style={{ borderColor: "rgba(15,31,15,0.08)" }}
-      >
-        <h2 className="text-3xl font-semibold text-[#0F1F0F]">
-          About Villa Anant
-        </h2>
-
-        <p className="mt-4 text-[#4a4a4a] leading-relaxed text-lg">
-          <strong>
-            Villa Anant is crafted for those who seek more than just a stay — it
-            is a place to pause, breathe, and reconnect.
-          </strong>
-          <br />
-          <br />
-          Set amidst peaceful natural surroundings in Raipur, the villa blends
-          modern comfort with serene farmhouse charm. Whether you&apos;re
-          celebrating a special occasion or escaping the noise of everyday life,
-          Villa Anant offers a private, luxurious retreat designed to make every
-          moment unforgettable.
-        </p>
-      </section>
-
-      {/* FOOTER */}
-      <footer
-        className="mt-20"
-        style={{
-          backgroundColor: MOCHA,
-          color: "white",
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-14 grid md:grid-cols-4 gap-14">
-          {/* MINI MAP */}
-          <div>
-            <a
-              href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-40 rounded-lg overflow-hidden shadow border border-white/20 mb-4"
-            >
-              <img
-                src="/images/minimap.png"
-                className="w-full h-28 object-cover"
-                alt="Map showing Villa Anant location"
-              />
-            </a>
-
-            <a
-              href="https://maps.app.goo.gl/hSb7pNL1UYaCx6ep6"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-bold hover:opacity-80"
-            >
-              View on map
-            </a>
-          </div>
-
-          {/* HELP */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Find Help</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/contact" className="hover:opacity-80">
-                  Contact Us
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* TERMS */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Privacy &amp; Terms</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/privacy" className="hover:opacity-80">
-                  Privacy Center
-                </a>
-              </li>
-              <li>
-                <a href="/refund" className="hover:opacity-80">
-                  Refund &amp; Cancellation
-                </a>
-              </li>
-              <li>
-                <a href="/terms" className="hover:opacity-80">
-                  Terms &amp; Conditions
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* QUICK LINKS */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/" className="hover:opacity-80">
-                  Home
-                </a>
-              </li>
-              <li>
-                <a href="/rooms" className="hover:opacity-80">
-                  Rooms
-                </a>
-              </li>
-              <li>
-                <a href="/check" className="hover:opacity-80">
-                  Check Availability
-                </a>
-              </li>
-            </ul>
+      {/* HERO */}
+      <section className="relative flex min-h-screen items-end overflow-hidden text-white">
+        <img src="/villa/anantara1.webp" alt="Villa Anant at sunset with its private pool" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/5 to-black/75" />
+        <div className="relative z-10 mx-auto w-full max-w-6xl px-6 pb-24 md:pb-32">
+          <Eyebrow light>Raipur, Chhattisgarh</Eyebrow>
+          <h1 className="mb-5 mt-3 max-w-[11ch] font-display text-5xl leading-[1.05] md:text-8xl">
+            Pause. Breathe. Reconnect.
+          </h1>
+          <p className="mb-8 max-w-lg text-lg opacity-90">
+            A private luxury villa wrapped in farmhouse calm, made for slow weekends and celebrations worth remembering.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/check" className="rounded-full bg-clay px-7 py-3.5 font-medium transition hover:-translate-y-0.5">
+              Check Villa Availability
+            </Link>
+            <Link href="/rooms" className="rounded-full border border-white/70 px-7 py-3.5 font-medium transition hover:bg-white/10">
+              Explore the villa
+            </Link>
           </div>
         </div>
+      </section>
 
-        <div className="text-center py-4 text-xs text-white/80">
-          © {new Date().getFullYear()} Villa Anant
+      {/* STATS */}
+      <section className="mx-auto grid max-w-6xl grid-cols-2 border-b border-ink/10 md:grid-cols-4">
+        {[["Entire villa", "Exclusively yours"], ["3", "Designer rooms"], ["Farmhouse", "Calm, near Raipur"], ["Celebrate", "Occasions & stays"]].map(([a, b]) => (
+          <div key={a} className="border-ink/10 px-4 py-7 text-center md:border-r md:last:border-0">
+            <b className="block font-display text-3xl font-medium text-clay">{a}</b>
+            <span className="text-xs uppercase tracking-widest text-ink/60">{b}</span>
+          </div>
+        ))}
+      </section>
+
+      {/* ABOUT */}
+      <section className="mx-auto grid max-w-6xl items-center gap-14 px-6 py-24 md:grid-cols-2">
+        <div>
+          <Eyebrow>About the villa</Eyebrow>
+          <h2 className="mb-5 mt-3 font-display text-4xl md:text-6xl">More than a stay, a place to pause</h2>
+          <p className="mb-4 text-ink/70">
+            Set amid peaceful natural surroundings in Raipur, Villa Anant blends modern comfort with serene farmhouse charm.
+          </p>
+          <p className="mb-8 text-ink/70">
+            Whether you&apos;re celebrating a special occasion or escaping the noise of everyday life, it&apos;s a private, luxurious retreat designed to make every moment unforgettable.
+          </p>
+          <Link href="/check" className="rounded-full bg-clay px-7 py-3.5 font-medium text-white">Plan your stay</Link>
         </div>
-      </footer>
+        <img src="/villa/anantara7.webp" alt="Light-filled living room" loading="lazy" className="h-[420px] w-full rounded-t-[220px] rounded-b-2xl object-cover md:h-[560px]" />
+      </section>
 
-      {/* FLOATING ICONS */}
-      <div className="fixed bottom-6 right-6 flex flex-col gap-4 z-50">
-        {/* Instagram */}
-        <a
-          href="https://www.instagram.com/villa.anant/"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Visit Villa Anant on Instagram"
-          className="w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center border hover:scale-105 transition"
-        >
-          <img
-            src="/icons/instagram.png"
-            className="w-8 h-8"
-            alt="Instagram"
-          />
-        </a>
+      {/* ROOMS */}
+      <section className="border-y border-ink/10 bg-cream px-6 py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto mb-14 max-w-xl text-center">
+            <Eyebrow>Inside the villa</Eyebrow>
+            <h2 className="mt-3 font-display text-4xl md:text-6xl">Three rooms, three moods</h2>
+            <p className="mt-4 text-ink/70">
+              Villa Anant is booked as a whole, so every room, the pool and the grounds are exclusively yours.
+            </p>
+          </div>
+          <div className="grid gap-7 md:grid-cols-3">
+            {ROOMS.map((r) => (
+              <article key={r.name} className="group overflow-hidden rounded-2xl border border-ink/10 bg-cream">
+                <div className="aspect-[4/5] overflow-hidden">
+                  <img src={r.img} alt={r.name} loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" />
+                </div>
+                <div className="p-6">
+                  <h3 className="mb-2 font-display text-3xl">{r.name}</h3>
+                  <p className="text-[15px] text-ink/70">{r.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link href="/rooms" className="text-sm font-medium uppercase tracking-widest text-clay">See all photos →</Link>
+          </div>
+        </div>
+      </section>
 
-        {/* WhatsApp */}
-        <a
-          href="https://wa.me/918889777288?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20Villa%20Anant."
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Contact Villa Anant on WhatsApp"
-          className="w-14 h-14 rounded-full bg-[#0F1F0F] shadow-lg flex items-center justify-center hover:scale-105 transition"
-        >
-          <img
-            src="/icons/whatsapp.png"
-            className="w-8 h-8 invert"
-            alt="WhatsApp"
-          />
-        </a>
-      </div>
+      {/* GALLERY */}
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <div className="mb-12 text-center">
+          <Eyebrow>Gallery</Eyebrow>
+          <h2 className="mt-3 font-display text-4xl md:text-6xl">Golden hour, every hour</h2>
+        </div>
+        <div className="grid auto-rows-[180px] grid-cols-2 gap-3.5 md:auto-rows-[230px] md:grid-cols-4">
+          {GALLERY.map((g) => (
+            <img key={g.src} src={g.src} alt="Villa Anant" loading="lazy" className={`h-full w-full rounded-xl object-cover ${g.cls}`} />
+          ))}
+        </div>
+      </section>
+
+      {/* OCCASIONS */}
+      <section className="border-y border-ink/10 bg-cream px-6 py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 text-center">
+            <Eyebrow>Occasions</Eyebrow>
+            <h2 className="mt-3 font-display text-4xl md:text-6xl">Made for the moments that matter</h2>
+          </div>
+          <div className="grid gap-5 md:grid-cols-4">
+            {OCCASIONS.map(([t, d]) => (
+              <div key={t} className="rounded-2xl border border-ink/10 bg-sand p-7">
+                <h3 className="mb-2 font-display text-2xl">{t}</h3>
+                <p className="text-[15px] text-ink/70">{d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative overflow-hidden px-6 py-32 text-center text-white">
+        <img src="/videos/hero-poster.jpg" alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-black/60" />
+        <div className="relative z-10">
+          <Eyebrow light>Ready when you are</Eyebrow>
+          <h2 className="mb-7 mt-3 font-display text-5xl md:text-7xl">Plan your stay at Villa Anant</h2>
+          <Link href="/check" className="rounded-full bg-clay px-8 py-4 font-medium">Check Villa Availability</Link>
+        </div>
+      </section>
+
+      <SiteFooter />
     </main>
   );
 }

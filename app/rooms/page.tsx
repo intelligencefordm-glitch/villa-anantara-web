@@ -1,175 +1,72 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
-const MOCHA = "#C29F80";
+type Room = { name: string; description: string; images: string[] };
 
-type Room = {
-  name: string;
-  description: string;
-  images: string[];
-};
+const imgs = (n: number) => Array.from({ length: 6 }, (_, i) => `/rooms/room${n}-${i + 1}.jpg`);
 
 const rooms: Room[] = [
-  {
-    name: "The Oak Haven",
-    description:
-      "A spacious master bedroom with warm wood tones, natural textures and a cosy ambience. Designed for peaceful, luxurious rest.",
-    images: [
-      "/rooms/room1-1.jpg",
-      "/rooms/room1-2.jpg",
-      "/rooms/room1-3.jpg",
-      "/rooms/room1-4.jpg",
-      "/rooms/room1-5.jpg",
-      "/rooms/room1-6.jpg",
-    ],
-  },
-  {
-    name: "The Terra Studio",
-    description:
-      "Earthy tones, artistic ceiling lines and a serene vibe create a relaxing environment ideal for unwinding and rejuvenating.",
-    images: [
-      "/rooms/room2-1.jpg",
-      "/rooms/room2-2.jpg",
-      "/rooms/room2-3.jpg",
-      "/rooms/room2-4.jpg",
-      "/rooms/room2-5.jpg",
-      "/rooms/room2-6.jpg",
-    ],
-  },
-  {
-    name: "The Moonstone Suite",
-    description:
-      "Soft lighting, rich textures and a warm atmosphere define this premium suite — perfect for restful nights and cosy mornings.",
-    images: [
-      "/rooms/room3-1.jpg",
-      "/rooms/room3-2.jpg",
-      "/rooms/room3-3.jpg",
-      "/rooms/room3-4.jpg",
-      "/rooms/room3-5.jpg",
-      "/rooms/room3-6.jpg",
-    ],
-  },
+  { name: "The Oak Haven", description: "A spacious master bedroom with warm wood tones, natural textures and a cosy ambience. Designed for peaceful, luxurious rest.", images: imgs(1) },
+  { name: "The Terra Studio", description: "Earthy tones, artistic ceiling lines and a serene vibe create a relaxing environment ideal for unwinding and rejuvenating.", images: imgs(2) },
+  { name: "The Moonstone Suite", description: "Soft lighting, rich textures and a warm atmosphere define this premium suite, perfect for restful nights and cosy mornings.", images: imgs(3) },
 ];
 
 export default function RoomsPage() {
   return (
-    <main
-      className="min-h-screen p-6 relative"
-      style={{ background: "#EFE5D5" }}
-    >
-      {/* Back Button */}
-      <button
-        onClick={() => window.history.back()}
-        className="mb-4 px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
-        aria-label="Go back to the previous page"
-      >
-        ← Back
-      </button>
+    <main className="min-h-screen bg-sand">
+      <SiteHeader />
+      <div className="mx-auto max-w-6xl px-6 pb-24 pt-32">
+        <span className="text-xs font-medium uppercase tracking-[0.28em] text-clay">The villa</span>
+        <h1 className="mt-3 font-display text-5xl md:text-7xl">Three rooms, one private retreat</h1>
+        <p className="mt-4 max-w-2xl text-ink/70">
+          Villa Anant is booked as a whole, so every room, the pool and the grounds are exclusively yours.
+        </p>
 
-      {/* Page Heading */}
-      <h1 className="text-3xl font-bold mb-6 text-[#0F1F0F]">
-        Our Rooms
-      </h1>
+        <div className="mt-14 space-y-16">
+          {rooms.map((room, idx) => (
+            <RoomCard key={room.name} room={room} flip={idx % 2 === 1} />
+          ))}
+        </div>
 
-      {/* Room Cards */}
-      <div className="space-y-10">
-        {rooms.map((room) => (
-          <RoomCard key={room.name} room={room} />
-        ))}
+        <div className="mt-20 text-center">
+          <Link href="/check" className="rounded-full bg-clay px-8 py-4 font-medium text-white">
+            Check Villa Availability
+          </Link>
+        </div>
       </div>
-
-      {/* Floating Book Now Button */}
-      <button
-        onClick={() => (window.location.href = "/check")}
-        className="fixed bottom-6 right-6 bg-[#0F1F0F] text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold hover:bg-gray-900 hover:scale-105 transition-all"
-        style={{ zIndex: 999 }}
-        aria-label="Check availability and book Villa Anant"
-      >
-        Book Now
-      </button>
+      <SiteFooter />
     </main>
   );
 }
 
-function RoomCard({ room }: { room: Room }) {
+function RoomCard({ room, flip }: { room: Room; flip: boolean }) {
   const [i, setI] = useState(0);
   const total = room.images.length;
 
-  const prev = () => {
-    setI((current) => (current - 1 + total) % total);
-  };
-
-  const next = () => {
-    setI((current) => (current + 1) % total);
-  };
-
-  // Automatically advance the slideshow every 4 seconds.
   useEffect(() => {
-    const timer = setInterval(() => {
-      setI((current) => (current + 1) % total);
-    }, 4000);
-
+    const timer = setInterval(() => setI((c) => (c + 1) % total), 4500);
     return () => clearInterval(timer);
   }, [total]);
 
   return (
-    <section className="bg-white rounded-xl shadow overflow-hidden">
-      {/* Room Header */}
-      <div
-        className="p-5 border-b"
-        style={{ backgroundColor: MOCHA, color: "white" }}
-      >
-        <h2 className="text-2xl font-semibold">{room.name}</h2>
-
-        <p className="opacity-90 mt-1">{room.description}</p>
-      </div>
-
-      {/* Room Images */}
-      <div className="p-5 grid md:grid-cols-2 gap-6 items-center">
-        <div className="relative w-full h-72 md:h-96 rounded-lg overflow-hidden bg-black/10">
-          {/* Previous Image */}
-          <button
-            type="button"
-            onClick={prev}
-            aria-label={`Previous image of ${room.name}`}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl hover:bg-black/70 transition"
-          >
-            ‹
-          </button>
-
-          <img
-            src={room.images[i]}
-            alt={`${room.name} — image ${i + 1} of ${total}`}
-            className="w-full h-full object-cover"
-          />
-
-          {/* Next Image */}
-          <button
-            type="button"
-            onClick={next}
-            aria-label={`Next image of ${room.name}`}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl hover:bg-black/70 transition"
-          >
-            ›
-          </button>
-
-          {/* Slideshow Indicators */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-            {room.images.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setI(idx)}
-                aria-label={`Show image ${idx + 1} of ${room.name}`}
-                aria-current={idx === i ? "true" : undefined}
-                className={`w-2.5 h-2.5 rounded-full transition ${
-                  idx === i ? "bg-white" : "bg-white/40"
-                }`}
-              />
-            ))}
-          </div>
+    <section className="grid items-center gap-10 md:grid-cols-2">
+      <div className={`relative h-80 overflow-hidden rounded-2xl bg-black/10 md:h-[460px] ${flip ? "md:order-2" : ""}`}>
+        <img src={room.images[i]} alt={`${room.name}, image ${i + 1} of ${total}`} className="h-full w-full object-cover" />
+        <button type="button" aria-label={`Previous image of ${room.name}`} onClick={() => setI((i - 1 + total) % total)} className="absolute left-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-xl text-white hover:bg-black/70">‹</button>
+        <button type="button" aria-label={`Next image of ${room.name}`} onClick={() => setI((i + 1) % total)} className="absolute right-3 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full bg-black/50 text-xl text-white hover:bg-black/70">›</button>
+        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-2">
+          {room.images.map((_, idx) => (
+            <button key={idx} type="button" aria-label={`Show image ${idx + 1}`} onClick={() => setI(idx)} className={`h-2.5 w-2.5 rounded-full ${idx === i ? "bg-white" : "bg-white/40"}`} />
+          ))}
         </div>
+      </div>
+      <div>
+        <h2 className="font-display text-4xl md:text-5xl">{room.name}</h2>
+        <p className="mt-4 text-lg text-ink/70">{room.description}</p>
       </div>
     </section>
   );

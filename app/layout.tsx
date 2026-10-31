@@ -1,6 +1,6 @@
 import "./globals.css";
 import localFont from "next/font/local";
-import { Poppins } from "next/font/google";
+import { Poppins, Cormorant_Garamond, Jost } from "next/font/google";
 import React from "react";
 import type { Metadata } from "next";
 import CookieConsent from "./components/CookieConsent";
@@ -20,6 +20,20 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
+  display: "swap",
+});
+
+// NEW DESIGN FONTS
+const display = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display",
+  display: "swap",
+});
+const body = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-body",
   display: "swap",
 });
 
@@ -63,8 +77,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${futura.variable} ${poppins.variable} ${abigail.variable} font-sans`}
-        style={{ backgroundColor: "#EFE5D5" }}
+        className={`${futura.variable} ${poppins.variable} ${abigail.variable} ${display.variable} ${body.variable} font-body`}
+        style={{ backgroundColor: "#f6efe3" }}
       >
         {/* GLOBAL COOKIE POPUP */}
         <CookieConsent />
