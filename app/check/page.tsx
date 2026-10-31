@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import {
@@ -10,7 +12,7 @@ import {
   startOfDay,
 } from "date-fns";
 
-const MOCHA = "#C29F80";
+const MOCHA = "#b5714a";
 const WHATSAPP_NUMBER = "918889777288";
 
 export default function CheckAvailabilityPage() {
@@ -182,17 +184,19 @@ export default function CheckAvailabilityPage() {
   };
 
   return (
-    <main className="min-h-screen p-6" style={{ background: "#EFE5D5" }}>
+    <>
+      <SiteHeader />
+      <main className="min-h-screen bg-sand px-6 pb-16 pt-28">
       <div className="max-w-4xl mx-auto">
         <button
           type="button"
           onClick={() => window.history.back()}
-          className="mb-5 px-4 py-2 rounded border border-[#0F1F0F]/30 text-[#0F1F0F] hover:bg-black/5 transition"
+          className="mb-5 px-4 py-2 rounded border border-ink/30 text-ink hover:bg-black/5 transition"
         >
           ← Back
         </button>
 
-        <h1 className="text-3xl font-bold mb-2 text-[#0F1F0F]">
+        <h1 className="font-display text-4xl md:text-5xl font-medium mb-2 text-ink">
           Check Availability
         </h1>
 
@@ -202,12 +206,12 @@ export default function CheckAvailabilityPage() {
         </p>
 
         {getCalendarText() && (
-          <div className="mb-3 text-lg font-medium text-[#0F1F0F]">
+          <div className="mb-3 text-lg font-medium text-ink">
             {getCalendarText()}
           </div>
         )}
 
-        <div className="rounded-xl bg-white p-4 md:p-6 shadow-sm overflow-x-auto">
+        <div className="rounded-2xl border border-ink/10 bg-cream p-4 md:p-6 shadow-sm overflow-x-auto">
           <DayPicker
             mode="range"
             selected={range}
@@ -219,7 +223,7 @@ export default function CheckAvailabilityPage() {
         <button
           type="button"
           onClick={handleResetDates}
-          className="mt-4 mb-2 px-4 py-2 rounded border border-[#0F1F0F]/40 text-sm text-[#0F1F0F] hover:bg-black/5 transition"
+          className="mt-4 mb-2 px-4 py-2 rounded border border-ink/40 text-sm text-ink hover:bg-black/5 transition"
         >
           Reset dates
         </button>
@@ -331,7 +335,7 @@ export default function CheckAvailabilityPage() {
               type="button"
               onClick={handleSubmit}
               disabled={saving}
-              className="w-full p-3 mt-4 bg-[#0F1F0F] text-white rounded font-semibold hover:bg-[#1b321b] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full p-3 mt-4 bg-ink text-white rounded font-semibold hover:bg-[#1b321b] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {saving ? "Saving inquiry..." : "Confirm & Send on WhatsApp"}
             </button>
@@ -348,5 +352,7 @@ export default function CheckAvailabilityPage() {
         )}
       </div>
     </main>
+      <SiteFooter />
+    </>
   );
 }

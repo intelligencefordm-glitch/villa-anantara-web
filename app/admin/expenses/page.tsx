@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-const BG = "#EFE5D5";
-const MOCHA = "#C29F80";
+const BG = "#f6efe3";
+const MOCHA = "#1d2a1d";
 
 type PaymentMode = "Online" | "Cash" | "Mixed";
 
@@ -109,8 +109,12 @@ function getExpenseBreakdown(expense: Expense) {
 
 export default function ExpensesPage() {
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState(() =>
+    typeof window !== "undefined" ? window.sessionStorage.getItem("va_admin") || "" : ""
+  );
+  const [authed, setAuthed] = useState(() =>
+    typeof window !== "undefined" && !!window.sessionStorage.getItem("va_admin")
+  );
 
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -147,6 +151,7 @@ export default function ExpensesPage() {
   }
 
   function logout(message: string) {
+    window.sessionStorage.removeItem("va_admin"); window.dispatchEvent(new Event("va-admin-logout"));
     setAuthed(false);
     setPassword("");
     setExpenses([]);
@@ -500,7 +505,7 @@ export default function ExpensesPage() {
         style={{ background: BG }}
       >
         <div className="bg-white p-8 rounded-lg shadow w-full max-w-sm">
-          <h1 className="text-2xl font-bold text-center mb-5">
+          <h1 className="font-display tracking-wide text-3xl md:text-4xl font-medium text-center mb-5">
             Villa Anant
           </h1>
 
@@ -545,7 +550,7 @@ export default function ExpensesPage() {
         style={{ background: MOCHA, color: "white" }}
       >
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="font-display tracking-wide text-3xl md:text-4xl font-medium">
             Villa Anant — Expenses
           </h1>
           <p className="text-sm opacity-90">
@@ -611,7 +616,7 @@ export default function ExpensesPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-5">
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Previous Balance / Opening Balance</p>
             <p className={`text-2xl font-bold ${openingBalance < 0 ? "text-red-700" : "text-green-800"}`}>
               {money(openingBalance)}
@@ -621,7 +626,7 @@ export default function ExpensesPage() {
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Current Month Income</p>
             <p className="text-2xl font-bold text-green-800">
               {money(totalIncome)}
@@ -631,28 +636,28 @@ export default function ExpensesPage() {
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Online Income</p>
             <p className="text-2xl font-bold">
               {money(onlineIncome)}
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Cash Income</p>
             <p className="text-2xl font-bold">
               {money(cashIncome)}
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Current Month Expenses</p>
             <p className="text-2xl font-bold text-red-700">
               {money(totalExpenses)}
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Available Balance</p>
             <p className={`text-2xl font-bold ${availableBalance < 0 ? "text-red-700" : "text-green-800"}`}>
               {money(availableBalance)}
@@ -662,7 +667,7 @@ export default function ExpensesPage() {
             </p>
           </div>
 
-          <div className="rounded-lg p-4 bg-[#EFE5D5]">
+          <div className="rounded-lg p-4 bg-sand">
             <p className="text-sm text-gray-600">Expense Entries</p>
             <p className="text-2xl font-bold">
               {monthlyExpenses.length}
@@ -804,7 +809,7 @@ export default function ExpensesPage() {
               </label>
             )}
 
-            <div className="md:col-span-2 rounded-lg bg-[#EFE5D5] p-4">
+            <div className="md:col-span-2 rounded-lg bg-sand p-4">
               <p className="text-sm text-gray-600">Total Expense</p>
               <p className="text-2xl font-bold text-red-700">
                 {money(formTotal)}
