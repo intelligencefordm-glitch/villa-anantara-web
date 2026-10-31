@@ -1,16 +1,20 @@
 "use client";
 import React from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen px-6 py-24 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold text-[#0F1F0F] mb-6">Terms & Conditions</h1>
+    <div className="bg-sand">
+      <SiteHeader />
+      <main className="mx-auto min-h-screen max-w-4xl px-6 pb-20 pt-32">
+      <h1 className="font-display text-4xl md:text-5xl font-medium text-ink mb-6">Terms & Conditions</h1>
 
-      <div className="space-y-8 text-[#333] leading-relaxed font-poppins">
+      <div className="space-y-8 text-ink/80 leading-relaxed font-body">
 
         {/* 🔥 NEW RULE ADDED ON TOP (AS REQUESTED) */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             <b>0. Strict Prohibition: Hukkah / Shisha</b>
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -24,7 +28,7 @@ export default function TermsPage() {
         {/* ORIGINAL SECTIONS BELOW — ONLY ONE LINE EDITED (50% ADVANCE) */}
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">1. Booking & Payment Policy</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">1. Booking & Payment Policy</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>The villa can accommodate up to 15 guests.</li>
 
@@ -37,7 +41,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">2. Security Deposit</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">2. Security Deposit</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Refundable security deposit of ₹20,000 is required before check-in.</li>
             <li>Refunded at check-out after property inspection.</li>
@@ -46,7 +50,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">3. Cancellation Policy</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">3. Cancellation Policy</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>If cancelled 15+ days before check-in, full refund of advance.</li>
             <li>If cancelled within 15 days, advance is non-refundable.</li>
@@ -55,7 +59,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">4. Check-In & Check-Out</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">4. Check-In & Check-Out</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Check-in: 12:00 PM</li>
             <li>Check-out: 11:00 AM</li>
@@ -64,7 +68,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">5. Guest Rules & House Policies</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">5. Guest Rules & House Policies</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Maximum 15 guests allowed. Extra guests will be charged.</li>
             <li>Extra beds available at additional cost.</li>
@@ -77,7 +81,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">6. Pool Rules</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">6. Pool Rules</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Pool usage is at guest’s own risk.</li>
             <li>Children must always be supervised.</li>
@@ -89,7 +93,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">7. Safety & Liability</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">7. Safety & Liability</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Guests are responsible for belongings.</li>
             <li>Not liable for injury or loss due to negligence.</li>
@@ -99,7 +103,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">8. Food & Breakfast Policy</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">8. Food & Breakfast Policy</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Groceries must be provided by the guest.</li>
             <li>We also provide an additional kitchen for bigger gathering at additional cost</li>
@@ -109,7 +113,7 @@ export default function TermsPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">9. Additional Charges</h2>
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">9. Additional Charges</h2>
           <ul className="list-disc ml-6 space-y-2">
             <li>Extra beds</li>
             <li>Guests above 15 persons</li>
@@ -120,5 +124,7 @@ export default function TermsPage() {
 
       </div>
     </main>
+      <SiteFooter />
+    </div>
   );
 }
