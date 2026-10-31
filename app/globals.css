@@ -2,13 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: global font styles */
-body {
-  @apply font-sans text-gray-800;
+html {
+  scroll-behavior: smooth;
 }
+
+body {
+  @apply font-body text-ink;
+}
+
 /* style for react-day-picker blocked modifier */
 .rdp-blocked {
-  background-color: #d9534f !important; /* bootstrap red-ish */
+  background-color: #d9534f !important;
   color: white !important;
   border-radius: 6px !important;
   box-shadow: none !important;
