@@ -47,8 +47,12 @@ const STATUSES: InquiryStatus[] = [
 
 export default function AdminInquiriesPage() {
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState(() =>
+    typeof window !== "undefined" ? window.sessionStorage.getItem("va_admin") || "" : ""
+  );
+  const [authed, setAuthed] = useState(() =>
+    typeof window !== "undefined" && !!window.sessionStorage.getItem("va_admin")
+  );
 
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -65,7 +69,12 @@ export default function AdminInquiriesPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<InquiryForm>(EMPTY_FORM);
 
-  const mocha = "#C29F80";
+  const mocha = "#1d2a1d";
+
+  useEffect(() => {
+    if (authed && password) loadInquiries(password);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadInquiries(currentPassword = password) {
     setLoading(true);
@@ -301,7 +310,7 @@ export default function AdminInquiriesPage() {
 
   if (!authed) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#EFE5D5] px-4">
+      <main className="flex min-h-screen items-center justify-center bg-sand px-4">
         <div className="w-full max-w-sm rounded-lg bg-white p-8 shadow-md">
           <h2 className="mb-4 text-center text-2xl font-semibold text-[#0F1F0F]">
             Admin Login
@@ -334,13 +343,13 @@ export default function AdminInquiriesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#EFE5D5] p-4 sm:p-6">
+    <main className="min-h-screen bg-sand p-4 sm:p-6">
       <header
         className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg p-4 text-white sm:p-5"
         style={{ backgroundColor: mocha }}
       >
         <div>
-          <h1 className="text-2xl font-bold">Inquiries</h1>
+          <h1 className="font-display tracking-wide text-3xl md:text-4xl font-medium">Inquiries</h1>
           <p className="text-sm opacity-90">Manage Villa Anant enquiries</p>
         </div>
         <div className="flex flex-wrap gap-2">
