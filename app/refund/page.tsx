@@ -1,18 +1,22 @@
 "use client";
 import React from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function RefundPolicyPage() {
   return (
-    <main className="min-h-screen px-6 py-24 max-w-4xl mx-auto">
+    <div className="bg-sand">
+      <SiteHeader />
+      <main className="mx-auto min-h-screen max-w-4xl px-6 pb-20 pt-32">
       
-      <h1 className="text-4xl font-bold text-[#0F1F0F] mb-6">
+      <h1 className="font-display text-4xl md:text-5xl font-medium text-ink mb-6">
         Refund & Cancellation Policy
       </h1>
 
-      <div className="space-y-8 text-[#333] leading-relaxed font-poppins">
+      <div className="space-y-8 text-ink/80 leading-relaxed font-body">
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             1. Cancellation Rules
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -29,7 +33,7 @@ export default function RefundPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             2. Refund of Security Deposit
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -40,7 +44,7 @@ export default function RefundPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             3. Non-Refundable Situations
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -53,7 +57,7 @@ export default function RefundPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             4. Payment Refund Method
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -63,7 +67,7 @@ export default function RefundPolicyPage() {
         </section>
 
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             5. Rescheduling Policy
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -74,5 +78,7 @@ export default function RefundPolicyPage() {
 
       </div>
     </main>
+      <SiteFooter />
+    </div>
   );
 }
