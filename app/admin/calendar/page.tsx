@@ -8,8 +8,12 @@ import { format } from "date-fns";
 export default function AdminCalendarPage() {
   // AUTH
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState(() =>
+    typeof window !== "undefined" ? window.sessionStorage.getItem("va_admin") || "" : ""
+  );
+  const [authed, setAuthed] = useState(() =>
+    typeof window !== "undefined" && !!window.sessionStorage.getItem("va_admin")
+  );
 
   // DATA
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
@@ -17,7 +21,7 @@ export default function AdminCalendarPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const mocha = "#C29F80";
+  const mocha = "#1d2a1d";
   const red = "#B00020";
 
   // ------------------------------------
@@ -164,7 +168,7 @@ export default function AdminCalendarPage() {
   // ------------------------------------
   if (!authed) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-[#EFE5D5]">
+      <main className="min-h-screen flex items-center justify-center bg-sand">
         <div className="bg-white p-8 rounded shadow-md w-96">
           <h2 className="text-2xl font-semibold mb-4 text-center">
             Admin Login
@@ -198,12 +202,12 @@ export default function AdminCalendarPage() {
   // LOGGED IN VIEW
   // ------------------------------------
   return (
-    <main className="min-h-screen bg-[#EFE5D5] p-6">
+    <main className="min-h-screen bg-sand p-6">
       <header
         className="mb-6 p-4 rounded"
         style={{ backgroundColor: mocha, color: "white" }}
       >
-        <h1 className="text-2xl font-bold">Manage Calendar</h1>
+        <h1 className="font-display tracking-wide text-3xl md:text-4xl font-medium">Manage Calendar</h1>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,6 +229,7 @@ export default function AdminCalendarPage() {
                 onClick={() => {
                   setAuthed(false);
                   setPassword("");
+                  window.sessionStorage.removeItem("va_admin"); window.dispatchEvent(new Event("va-admin-logout"));
                   setBlockedDates([]);
                   setSelectedDates([]);
                 }}
