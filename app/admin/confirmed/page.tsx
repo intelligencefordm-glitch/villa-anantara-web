@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 
-const MOCHA = "#C29F80";
-const BG = "#EFE5D5";
+const MOCHA = "#1d2a1d";
+const BG = "#f6efe3";
 
 type PaymentMode = "Online" | "Cash" | "Mixed";
 
@@ -93,8 +93,12 @@ function paymentBreakdown(booking: Booking) {
 
 export default function ConfirmedBookingsPage() {
   const [passwordInput, setPasswordInput] = useState("");
-  const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState(() =>
+    typeof window !== "undefined" ? window.sessionStorage.getItem("va_admin") || "" : ""
+  );
+  const [authed, setAuthed] = useState(() =>
+    typeof window !== "undefined" && !!window.sessionStorage.getItem("va_admin")
+  );
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -132,6 +136,7 @@ export default function ConfirmedBookingsPage() {
   }
 
   function handleUnauthorized(message: string) {
+    window.sessionStorage.removeItem("va_admin"); window.dispatchEvent(new Event("va-admin-logout"));
     setAuthed(false);
     setPassword("");
     setPasswordInput("");
@@ -558,7 +563,7 @@ export default function ConfirmedBookingsPage() {
         className="mb-6 p-4 rounded-lg flex flex-col gap-3 md:flex-row md:justify-between md:items-center"
         style={{ backgroundColor: MOCHA, color: "white" }}
       >
-        <h1 className="text-xl md:text-2xl font-bold">
+        <h1 className="font-display tracking-wide text-3xl md:text-4xl font-medium">
           Confirmed Bookings
         </h1>
 
@@ -830,32 +835,32 @@ export default function ConfirmedBookingsPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Bookings</p>
             <p className="text-xl font-bold">{monthlyBookings.length}</p>
           </div>
 
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Total Booking Value</p>
             <p className="text-lg font-bold">{money(monthlyTotal)}</p>
           </div>
 
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Payments Received</p>
             <p className="text-lg font-bold">{money(monthlyPaid)}</p>
           </div>
 
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Online Received</p>
             <p className="text-lg font-bold">{money(monthlyOnline)}</p>
           </div>
 
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Cash Received</p>
             <p className="text-lg font-bold">{money(monthlyCash)}</p>
           </div>
 
-          <div className="rounded p-3 bg-[#EFE5D5]">
+          <div className="rounded p-3 bg-sand">
             <p className="text-xs text-gray-600">Outstanding Due</p>
             <p className="text-lg font-bold">{money(monthlyDue)}</p>
           </div>
