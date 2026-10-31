@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import axios from "axios";
 
 export default function BookingPage() {
@@ -66,8 +68,10 @@ export default function BookingPage() {
   }
 
   return (
-    <main className="container mx-auto max-w-2xl px-6 py-16">
-      <h1 className="text-3xl font-bold text-[#0F1F0F] mb-4">
+    <>
+      <SiteHeader />
+      <main className="container mx-auto max-w-2xl px-6 pb-20 pt-32">
+      <h1 className="font-display text-4xl md:text-5xl font-medium text-ink mb-4">
         Book Villa Anant
       </h1>
 
@@ -156,7 +160,7 @@ export default function BookingPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded bg-[#0F1F0F] px-5 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded bg-ink px-5 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? "Submitting..." : "Request Booking (Pay Later)"}
         </button>
@@ -168,5 +172,7 @@ export default function BookingPage() {
         )}
       </form>
     </main>
+      <SiteFooter />
+    </>
   );
 }
