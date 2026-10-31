@@ -1,18 +1,22 @@
 "use client";
 
 import React from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export default function PrivacyPolicyPage() {
   return (
-    <main className="min-h-screen px-6 py-24 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-bold text-[#0F1F0F] mb-6">
+    <div className="bg-sand">
+      <SiteHeader />
+      <main className="mx-auto min-h-screen max-w-4xl px-6 pb-20 pt-32">
+      <h1 className="font-display text-4xl md:text-5xl font-medium text-ink mb-6">
         Privacy Center
       </h1>
 
-      <div className="space-y-8 text-[#333] leading-relaxed font-poppins">
+      <div className="space-y-8 text-ink/80 leading-relaxed font-body">
         {/* Section 1 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             1. Information We Collect
           </h2>
           <p>
@@ -29,7 +33,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 2 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             2. How We Use Your Information
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -42,7 +46,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 3 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             3. CCTV Monitoring
           </h2>
           <p>
@@ -57,7 +61,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 4 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             4. Payment Security
           </h2>
           <p>
@@ -69,7 +73,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 5 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             5. Sharing of Information
           </h2>
           <p>We do NOT sell or share your information with advertisers.</p>
@@ -83,7 +87,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 6 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             6. Your Rights
           </h2>
           <ul className="list-disc ml-6 space-y-2">
@@ -95,7 +99,7 @@ export default function PrivacyPolicyPage() {
 
         {/* Section 7 */}
         <section>
-          <h2 className="text-2xl font-semibold text-[#0F1F0F] mb-3">
+          <h2 className="font-display text-3xl font-medium text-ink mb-3">
             7. Contact Us
           </h2>
           <p>
@@ -109,5 +113,7 @@ export default function PrivacyPolicyPage() {
         </section>
       </div>
     </main>
+      <SiteFooter />
+    </div>
   );
 }
